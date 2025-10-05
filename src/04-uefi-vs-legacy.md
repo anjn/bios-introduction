@@ -1,0 +1,1 @@
+# UEFI vs Legacy BIOS
