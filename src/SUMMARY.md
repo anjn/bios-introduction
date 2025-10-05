@@ -4,100 +4,105 @@
 
 ---
 
-# Part 0. ウォームアップ：道具と全体像
+# Part 0. BIOS/UEFIの全体像
 
 - [本書のゴールと学習ロードマップ](./part0/01-goals-and-roadmap.md)
-- [開発環境のセットアップ (Linux/macOS)](./part0/02-dev-environment-unix.md)
-- [開発環境のセットアップ (Windows)](./part0/03-dev-environment-windows.md)
-- [デバッグ環境の準備](./part0/04-debug-setup.md)
-- [Part 0 まとめとチェックリスト](./part0/05-warmup-checklist.md)
+- [BIOS/UEFIとは何か：歴史と役割](./part0/02-what-is-bios-uefi.md)
+- [ファームウェアエコシステム全体像](./part0/03-firmware-ecosystem.md)
+- [学習環境の概要とツールの位置づけ](./part0/04-learning-environment.md)
+- [Part 0 まとめ](./part0/05-part0-summary.md)
 
 ---
 
-# Part I. x86_64 ブートの基礎を最短理解
+# Part I. x86_64 ブート基礎：CPUとメモリ
 
 - [リセットから最初の命令まで](./part1/01-reset-vector.md)
 - [メモリマップと E820](./part1/02-memory-map.md)
 - [CPU モード遷移の全体像](./part1/03-cpu-mode-transition.md)
-- [割り込みとタイマ](./part1/04-interrupts-and-timers.md)
-- [UEFI ブートフローの全体像](./part1/05-uefi-boot-flow.md)
-- [UEFI ドライバとアプリケーション](./part1/06-uefi-drivers-and-apps.md)
-- [Part I まとめと演習](./part1/07-basics-summary.md)
+- [割り込みとタイマの仕組み](./part1/04-interrupts-and-timers.md)
+- [UEFI ブートフェーズの全体像](./part1/05-uefi-boot-flow.md)
+- [各ブートフェーズの役割と責務](./part1/06-boot-phase-responsibilities.md)
+- [Part I まとめ](./part1/07-part1-summary.md)
 
 ---
 
-# Part II. 実装に踏み込む：EDK II で手を動かす
+# Part II. EDK II アーキテクチャの理解
 
-- [最小の UEFI アプリを作る](./part2/01-hello-world.md)
-- [.inf/.dec/.dsc ファイルの理解](./part2/02-edk2-files.md)
-- [DXE ドライバ入門](./part2/03-dxe-driver-basics.md)
-- [メモリとデバイスアクセス](./part2/04-memory-and-device-access.md)
-- [画面出力と GOP](./part2/05-graphics-output.md)
-- [ストレージブート](./part2/06-storage-boot.md)
-- [USB ブート](./part2/07-usb-boot.md)
-- [Part II 実践演習：ブートローダを作る](./part2/08-bootloader-exercise.md)
-
----
-
-# Part III. プラットフォーム初期化の勘所
-
-- [DRAM 初期化とメモリサービス](./part3/01-dram-init.md)
-- [CPU とチップセット初期化](./part3/02-cpu-chipset-init.md)
-- [PCH/SoC 初期化](./part3/03-pch-soc-init.md)
-- [PCIe 初期化とデバイス列挙](./part3/04-pcie-enumeration.md)
-- [ACPI テーブル基礎](./part3/05-acpi-basics.md)
-- [ACPI テーブル実装](./part3/06-acpi-implementation.md)
-- [SMBIOS と MP テーブル](./part3/07-smbios-and-mp.md)
-- [Part III まとめとハマりポイント](./part3/08-platform-init-summary.md)
+- [EDK II の設計思想と全体構成](./part2/01-edk2-architecture.md)
+- [モジュール構造とビルドシステム](./part2/02-module-and-build-system.md)
+- [プロトコルとドライバモデル](./part2/03-protocol-and-driver-model.md)
+- [ライブラリアーキテクチャ](./part2/04-library-architecture.md)
+- [ハードウェア抽象化の仕組み](./part2/05-hardware-abstraction.md)
+- [グラフィックスサブシステム (GOP)](./part2/06-graphics-subsystem.md)
+- [ストレージスタックの構造](./part2/07-storage-stack.md)
+- [USB スタックの構造](./part2/08-usb-stack.md)
+- [ブートマネージャとブートローダの役割](./part2/09-boot-manager-loader.md)
+- [Part II まとめ](./part2/10-part2-summary.md)
 
 ---
 
-# Part IV. セキュリティと信頼の確立
+# Part III. プラットフォーム初期化の仕組み
 
-- [UEFI Secure Boot 基礎](./part4/01-secure-boot-basics.md)
-- [UEFI Secure Boot 実装](./part4/02-secure-boot-implementation.md)
-- [TPM と Measured Boot](./part4/03-tpm-and-measured-boot.md)
-- [Intel Boot Guard と BIOS Guard](./part4/04-intel-boot-guard.md)
-- [AMD Platform Security Processor (PSP)](./part4/05-amd-psp.md)
-- [SPI フラッシュ保護](./part4/06-spi-flash-protection.md)
-- [SMM セキュリティ](./part4/07-smm-security.md)
-- [セキュリティ CVE 事例研究](./part4/08-security-cve-cases.md)
-- [Part IV まとめ：セキュリティチェックリスト](./part4/09-security-checklist.md)
-
----
-
-# Part V. デバッグ、最適化、実機展開
-
-- [デバッグの実践：失敗パターン別対処](./part5/01-debug-failure-patterns.md)
-- [デバッグツールの活用](./part5/02-debug-tools.md)
-- [ブート時間短縮術](./part5/03-boot-time-optimization.md)
-- [S3/Modern Standby 対応](./part5/04-s3-modern-standby.md)
-- [品質保証と自動テスト](./part5/05-qa-and-testing.md)
-- [ファームウェア更新](./part5/06-firmware-update.md)
-- [実機展開と量産](./part5/07-production-deployment.md)
-- [Part V 実践演習：デバッグチャレンジ](./part5/08-debug-challenge.md)
+- [PEI フェーズの役割と構造](./part3/01-pei-phase-architecture.md)
+- [DRAM 初期化の仕組み](./part3/02-dram-init.md)
+- [CPU とチップセット初期化](./part3/03-cpu-chipset-init.md)
+- [PCH/SoC の役割と初期化](./part3/04-pch-soc-init.md)
+- [PCIe の仕組みとデバイス列挙](./part3/05-pcie-enumeration.md)
+- [ACPI の目的と構造](./part3/06-acpi-architecture.md)
+- [ACPI テーブルの役割](./part3/07-acpi-tables.md)
+- [SMBIOS と MP テーブルの役割](./part3/08-smbios-and-mp.md)
+- [Part III まとめ](./part3/09-part3-summary.md)
 
 ---
 
-# Part VI. オルタナティブと発展
+# Part IV. セキュリティアーキテクチャ
 
-- [coreboot で学ぶ軽量ブートフロー](./part6/01-coreboot-intro.md)
-- [coreboot ビルドと実行](./part6/02-coreboot-build.md)
-- [レガシー BIOS の最小限](./part6/03-legacy-bios.md)
-- [ネットワークブート](./part6/04-network-boot.md)
-- [サーバプラットフォーム固有事項](./part6/05-server-platforms.md)
-- [組込み・ノート PC 固有事項](./part6/06-embedded-notebook.md)
-- [ARM64 ブート入門](./part6/07-arm64-boot.md)
-- [総合演習：ゼロから Linux 起動](./part6/08-zero-to-linux.md)
-- [Part VI まとめ](./part6/09-alternative-summary.md)
+- [ファームウェアセキュリティの全体像](./part4/01-firmware-security-overview.md)
+- [信頼チェーンの構築](./part4/02-chain-of-trust.md)
+- [UEFI Secure Boot の仕組み](./part4/03-secure-boot-architecture.md)
+- [TPM と Measured Boot](./part4/04-tpm-and-measured-boot.md)
+- [Intel Boot Guard の役割と仕組み](./part4/05-intel-boot-guard.md)
+- [AMD PSP の役割と仕組み](./part4/06-amd-psp.md)
+- [SPI フラッシュ保護機構](./part4/07-spi-flash-protection.md)
+- [SMM の仕組みとセキュリティ](./part4/08-smm-security.md)
+- [攻撃事例から学ぶ設計原則](./part4/09-security-case-studies.md)
+- [Part IV まとめ](./part4/10-part4-summary.md)
+
+---
+
+# Part V. デバッグと最適化の原理
+
+- [ファームウェアデバッグの基礎](./part5/01-debug-fundamentals.md)
+- [デバッグツールの仕組み](./part5/02-debug-tools-mechanism.md)
+- [典型的な問題パターンと原因](./part5/03-common-issues.md)
+- [ログとトレースの設計](./part5/04-logging-and-tracing.md)
+- [パフォーマンス測定の原理](./part5/05-performance-measurement.md)
+- [ブート時間最適化の考え方](./part5/06-boot-time-optimization.md)
+- [電源管理の仕組み (S3/Modern Standby)](./part5/07-power-management.md)
+- [ファームウェア更新の仕組み](./part5/08-firmware-update-mechanism.md)
+- [Part V まとめ](./part5/09-part5-summary.md)
+
+---
+
+# Part VI. 他のファームウェア実装と発展
+
+- [ファームウェアの多様性](./part6/01-firmware-diversity.md)
+- [coreboot の設計思想](./part6/02-coreboot-philosophy.md)
+- [coreboot と EDK II の比較](./part6/03-coreboot-vs-edk2.md)
+- [レガシー BIOS アーキテクチャ](./part6/04-legacy-bios-architecture.md)
+- [ネットワークブートの仕組み](./part6/05-network-boot.md)
+- [プラットフォーム別の特性：サーバ/組込み/モバイル](./part6/06-platform-characteristics.md)
+- [ARM64 ブートアーキテクチャ](./part6/07-arm64-boot-architecture.md)
+- [ARM と x86 の違い](./part6/08-arm-vs-x86.md)
+- [ファームウェアの将来展望](./part6/09-future-of-firmware.md)
+- [Part VI まとめ](./part6/10-part6-summary.md)
 
 ---
 
 # 付録・リファレンス
 
-- [コミュニティとリソース](./appendix/communities-and-resources.md)
-- [クイックリファレンス](./appendix/quick-reference.md)
 - [用語集](./appendix/glossary.md)
+- [参考文献とリソース](./appendix/bibliography.md)
+- [仕様書クイックリファレンス](./appendix/spec-quick-reference.md)
+- [コミュニティとリソース](./appendix/communities-and-resources.md)
 - [索引](./appendix/index.md)
-- [参考文献](./appendix/bibliography.md)
-- [演習解答例](./appendix/exercise-solutions.md)
