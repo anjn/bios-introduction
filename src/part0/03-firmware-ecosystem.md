@@ -14,7 +14,13 @@
 
 ## ファームウェアエコシステムとは
 
-ファームウェア開発は、単独のコードベースだけでなく、**仕様、ツール、コミュニティ**が連携する大きなエコシステムの中で行われます。
+ファームウェア開発は、単独のコードベースを書くだけでは完結しません。仕様、実装、ツール、そしてコミュニティが複雑に連携し、大きなエコシステムを形成しています。このエコシステムを理解することは、効果的なファームウェア開発を行う上で不可欠です。仕様は、何を実装すべきかを定義し、実装フレームワークは、どのように実装するかを提供し、ツールは、開発とデバッグを支援し、コミュニティは、知識の共有と問題解決を促進します。
+
+ファームウェアエコシステムは、複数の層から構成されています。最上位には、UEFI Specification、ACPI Specification、PCIe Specification といった仕様と標準規格があります。これらは、ファームウェアが準拠すべき技術的な要件を定義します。次の層には、EDK II、coreboot、U-Boot といった実装フレームワークがあり、仕様を実際のコードに落とし込むための基盤を提供します。さらに、QEMU/KVM、GCC/Clang、Python ビルドツールといった開発ツールが、これらのフレームワークを使った開発を支援します。そして、UEFI Forum、TianoCore、coreboot.org といったコミュニティが、エコシステム全体を推進し、サポートしています。
+
+この章では、このエコシステムの全体像を俯瞰し、各構成要素がどのように連携しているかを理解します。それぞれの要素の役割を把握することで、ファームウェア開発における情報の入手方法や、問題解決のアプローチが明確になります。
+
+**補足図**: 以下の図は、ファームウェアエコシステムの主要な構成要素と、それらの関係を示したものです。
 
 ```mermaid
 graph TB
@@ -55,24 +61,17 @@ graph TB
     style D fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
-この章では、このエコシステムの全体像を俯瞰します。
-
 ## 主要な仕様と標準規格
 
 ### UEFI Specification
 
-**策定**: UEFI Forum
-**最新版**: v2.10 (2022年)
-**URL**: https://uefi.org/specifications
+UEFI Specification は、UEFI Forum によって策定された、UEFI ファームウェアの中核となる仕様書です。最新版は v2.10 (2022年) であり、UEFI Forum の公式サイト (https://uefi.org/specifications) から入手できます。この仕様書は、UEFI のすべての側面を詳細に定義しており、ファームウェア開発者が準拠すべき技術的要件を明確にしています。
 
-**内容:**
-- UEFI のブートプロセス
-- プロトコル定義
-- サービス定義（Boot Services, Runtime Services）
-- ドライバモデル
-- セキュリティ（Secure Boot）
+UEFI Specification の内容は多岐にわたります。まず、UEFI のブートプロセス全体の流れを定義し、各フェーズでの処理内容を規定しています。次に、プロトコルの定義があります。プロトコルは、UEFI における機能の抽象化単位であり、デバイスやサービスへのアクセス方法を標準化します。また、Boot Services と Runtime Services という2つの主要なサービス群を定義しています。Boot Services は OS 起動前に利用可能なサービスであり、Runtime Services は OS 起動後も利用可能なサービスです。さらに、ドライバモデルを規定し、デバイスドライバの実装方法を標準化しています。セキュリティ面では、Secure Boot の詳細な仕様が含まれています。
 
-**主要セクション:**
+UEFI Specification は非常に大部な文書ですが、特に重要なセクションがあります。Section 2 は概要とアーキテクチャを説明しており、UEFI の全体像を理解する上で最も重要です。Section 3 から 6 は Boot Services を詳細に説明しており、メモリ管理、プロトコル操作、イベント処理などの基本機能が含まれます。Section 7 と 8 は Runtime Services とプロトコルを扱い、OS 起動後の動作を定義します。Section 27 は Secure Boot の仕様であり、セキュアなブートプロセスの実現に不可欠です。Section 32 はネットワークプロトコルを定義し、HTTP Boot などの高度な機能を説明しています。
+
+**参考表**: 以下の表は、UEFI Specification の主要セクションをまとめたものです。
 
 | セクション | 内容 | 重要度 |
 |-----------|------|--------|
@@ -84,19 +83,13 @@ graph TB
 
 ### ACPI Specification
 
-**策定**: UEFI Forum
-**最新版**: v6.5 (2022年)
-**URL**: https://uefi.org/specifications
+ACPI (Advanced Configuration and Power Interface) Specification も、UEFI Forum によって策定されています。最新版は v6.5 (2022年) であり、UEFI Specification と同じく UEFI Forum の公式サイトから入手できます。ACPI の主な目的は、ハードウェア構成を OS に伝えることです。ファームウェアは、システムのハードウェア構成を ACPI テーブルという形式で記述し、OS がこれを読み取ることで、ハードウェアの詳細を把握します。
 
-**目的**: ハードウェア構成をOSに伝える
+ACPI Specification の内容は、ハードウェア抽象化、電源管理、デバイス列挙、そして ASL/AML (ACPI Source Language / ACPI Machine Language) といった分野をカバーしています。ハードウェア抽象化により、OS はハードウェアの違いを意識せずに動作できます。電源管理機能により、システムのスリープ、ハイバネーション、電源オフといった状態遷移を制御できます。デバイス列挙により、システムに接続されているデバイスの情報を OS に提供します。ASL/AML は、ACPI の記述言語であり、複雑なハードウェア構成を柔軟に表現できます。
 
-**内容:**
-- ハードウェア抽象化
-- 電源管理
-- デバイス列挙
-- ASL/AML (ACPI Source/Machine Language)
+ACPI は、複数のテーブルから構成されています。最上位には RSDP (Root System Description Pointer) があり、これが他のテーブルへのエントリポイントとなります。RSDP は RSDT または XSDT (Root/Extended System Description Table) を指し、これが他のすべてのテーブルへのポインタを保持します。主要なテーブルとしては、FADT (Fixed ACPI Description Table) があり、固定的なハードウェア情報を含みます。MADT (Multiple APIC Description Table) は、割り込みコントローラの構成を記述します。DSDT (Differentiated System Description Table) は、デバイス固有の情報を ASL/AML で記述したものです。その他にも、MCFG (PCI Express メモリマップ構成) や HPET (高精度イベントタイマー) といった多数のテーブルが存在します。
 
-**主要テーブル:**
+**補足図**: 以下の図は、ACPI テーブルの階層構造を示したものです。
 
 ```mermaid
 graph TB
@@ -112,39 +105,25 @@ graph TB
 
 ### その他の重要な仕様
 
-**PCIe (PCI Express)**
-- **策定**: PCI-SIG
-- **内容**: 高速デバイスバスの仕様
-- **重要性**: デバイス列挙と設定に必須
+UEFI と ACPI 以外にも、ファームウェア開発に関わる重要な仕様がいくつかあります。PCIe (PCI Express) は、PCI-SIG によって策定された高速デバイスバスの仕様です。現代のシステムでは、ほとんどのデバイスが PCIe で接続されており、デバイスの列挙と設定に不可欠な仕様です。
 
-**SMBIOS**
-- **策定**: DMTF
-- **内容**: システム管理情報
-- **用途**: ハードウェアインベントリ
+SMBIOS は、DMTF (Distributed Management Task Force) によって策定されたシステム管理情報の仕様です。BIOS やマザーボードの製造情報、CPU やメモリの詳細といったハードウェアインベントリ情報を提供し、OS やシステム管理ツールがこれを利用します。
 
-**TCG (Trusted Computing Group)**
-- **内容**: TPM仕様
-- **用途**: セキュリティ、Measured Boot
+TCG (Trusted Computing Group) が策定する TPM (Trusted Platform Module) 仕様も重要です。TPM は、暗号化鍵の安全な保管や、Measured Boot によるシステムの完全性検証を実現するハードウェアモジュールです。セキュリティ機能の実装に不可欠な要素となっています。
 
-**USB**
-- **策定**: USB-IF
-- **内容**: USBコントローラと周辺機器
+USB 仕様は、USB-IF (USB Implementers Forum) によって策定されており、USB コントローラと周辺機器の動作を定義します。キーボード、マウス、ストレージといった多くのデバイスが USB で接続されるため、ファームウェアでの USB サポートは必須となっています。
 
 ## 実装とフレームワーク
 
 ### EDK II (EFI Development Kit II)
 
-**開発**: Intel → TianoCore (オープンソース化)
-**ライセンス**: BSD-2-Clause Plus Patent
-**言語**: C言語
-**URL**: https://github.com/tianocore/edk2
+EDK II (EFI Development Kit II) は、UEFI 仕様の参照実装であり、業界標準のファームウェア開発フレームワークです。元々 Intel によって開発されましたが、現在は TianoCore プロジェクトとしてオープンソース化されています。ライセンスは BSD-2-Clause Plus Patent であり、商用利用も可能です。C 言語で記述されており、GitHub (https://github.com/tianocore/edk2) でホストされています。
 
-**特徴:**
-- UEFI仕様の参照実装
-- 業界標準のフレームワーク
-- モジュラーな設計
+EDK II の最大の特徴は、UEFI 仕様の参照実装であることです。UEFI Forum が策定した仕様を忠実に実装しており、他のファームウェア実装のベースとして広く利用されています。業界標準のフレームワークとして、Intel、AMD、ARM といった主要なハードウェアベンダーが採用しています。また、モジュラーな設計を採用しており、必要な機能だけを選択してビルドすることができます。
 
-**アーキテクチャ:**
+EDK II のアーキテクチャは、複数のパッケージから構成されています。Core パッケージには、DXE Core や PEI Core といったブートプロセスの中核となるコンポーネントが含まれます。MdePkg (Module Development Environment Package) は、UEFI と PI (Platform Initialization) の基本定義を提供し、すべてのモジュールがこれに依存します。MdeModulePkg は、USB、ネットワーク、ディスクといった標準ドライバ群を含みます。Platform Packages は、特定のプラットフォーム固有のコードを格納します。
+
+**補足図**: 以下の図は、EDK II の構成を示したものです。
 
 ```mermaid
 graph TB
@@ -166,7 +145,9 @@ graph TB
     style D fill:#f9f,stroke:#333
 ```
 
-**主なパッケージ:**
+EDK II には、多数のパッケージが用意されています。MdePkg はすべてのモジュールが依存する基本定義を提供します。MdeModulePkg には、USB、ネットワーク、ディスクといった標準ドライバ群が含まれます。SecurityPkg は、Secure Boot や TPM といったセキュリティ機能を実装します。NetworkPkg は、HTTP Boot や iSCSI といったネットワークスタックを提供します。OvmfPkg (Open Virtual Machine Firmware Package) は、QEMU/KVM といった仮想環境向けのファームウェアであり、実機なしでの開発とテストを可能にします。
+
+**参考表**: 以下の表は、EDK II の主なパッケージをまとめたものです。
 
 | パッケージ | 内容 | 用途 |
 |-----------|------|------|
@@ -445,17 +426,15 @@ graph LR
 
 ## まとめ
 
-この章では、ファームウェアエコシステム全体像を説明しました。
+この章では、ファームウェアエコシステムの全体像を説明しました。ファームウェア開発は、単独のコードベースだけでなく、仕様、実装、ツール、コミュニティという4つの要素が統合されたエコシステムの中で行われます。これらの要素は相互に依存し、互いに影響を与えながら進化しています。
 
-**重要なポイント:**
+エコシステムの中核となるのは、UEFI Specification と ACPI Specification という2つの主要な仕様です。UEFI Specification は、ファームウェアのアーキテクチャ、プロトコル、サービスを定義し、ACPI Specification は、ハードウェア構成を OS に伝える方法を規定します。これらの仕様に準拠することで、異なるベンダーのファームウェアと OS が相互運用できるようになります。
 
-- ファームウェア開発は**仕様、実装、ツール、コミュニティ**の統合
-- **UEFI Specification** と **ACPI Specification** が中核
-- **EDK II** が業界標準の実装フレームワーク
-- **QEMU/OVMF** で開発・テストを行う
-- **TianoCore** と **UEFI Forum** がエコシステムを推進
+実装フレームワークとしては、EDK II が業界標準となっています。UEFI 仕様の参照実装であり、モジュラーな設計により、様々なプラットフォームに対応できます。coreboot や U-Boot といった代替実装も存在し、それぞれ異なる設計思想と用途を持っています。開発とテストには、QEMU/OVMF といった仮想環境が広く利用され、実機なしでの開発を可能にしています。GCC や GDB といった標準的な開発ツールも、ファームウェア開発において重要な役割を果たします。
 
-**エコシステムの構成要素:**
+エコシステム全体を推進しているのは、TianoCore や UEFI Forum といったコミュニティです。TianoCore は EDK II の開発とサポートを行い、UEFI Forum は仕様の策定と業界標準の推進を担当しています。これらのコミュニティを通じて、開発者は知識を共有し、問題を解決し、技術の進化に貢献しています。
+
+**参考表**: 以下の表は、エコシステムの構成要素をまとめたものです。
 
 | 要素 | 主要なもの | 役割 |
 |------|----------|------|
@@ -464,9 +443,9 @@ graph LR
 | ツール | QEMU, GCC, GDB | 開発環境 |
 | コミュニティ | TianoCore, UEFI Forum | サポート・推進 |
 
----
+次章では、実際の学習環境の構築について説明します。QEMU や EDK II のセットアップ方法、そして各ツールがエコシステムの中でどのような位置づけにあるかを、具体的に見ていきます。
 
-**次章では、学習環境の概要とツールの位置づけを見ていきます。**
+---
 
 📚 **参考資料**
 - [UEFI Forum](https://uefi.org/)
