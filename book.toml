@@ -1,7 +1,6 @@
 [book]
 title = "BIOS入門"
 authors = ["Jun Ando", "Sonnet 4.5"]
-language = "ja"
 multilingual = false
 src = "src"
 
