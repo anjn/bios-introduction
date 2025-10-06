@@ -109,23 +109,19 @@ sequenceDiagram
 
 ### QEMUの役割
 
-**QEMU (Quick Emulator)** は、オープンソースのエミュレータ・仮想化ソフトウェアです。
+**QEMU (Quick Emulator)** は、Fabrice Bellard によって開発されたオープンソースのエミュレータ・仮想化ソフトウェアです。2003年に最初にリリースされて以来、Linux カーネルの KVM (Kernel-based Virtual Machine) と統合され、現代の仮想化技術の中核となっています。QEMU は、完全なシステムエミュレーション機能を提供し、CPU、メモリ、周辺デバイスのすべてをソフトウェアで再現します。
 
-**主な機能:**
+**主な機能：**
 
-1. **CPU エミュレーション**
-   - x86_64, ARM, RISC-V など多数対応
-   - 命令レベルのエミュレーション
+QEMU の最も重要な機能は、**CPU エミュレーション**です。QEMU は、x86_64、ARM、RISC-V、MIPS、PowerPC など、30 種類以上のアーキテクチャをサポートしています。各 CPU の命令セットを忠実にエミュレートし、ゲスト OS が期待する動作を提供します。命令レベルのエミュレーションにより、異なるアーキテクチャ間でのクロスプラットフォーム実行が可能です。例えば、x86_64 ホスト上で ARM ファームウェアを実行したり、ARM ホスト上で RISC-V OS を実行したりできます。
 
-2. **デバイスエミュレーション**
-   - チップセット、PCIe、USB、ネットワークなど
-   - 実機に近い動作
+次に重要な機能は、**デバイスエミュレーション**です。QEMU は、実際のハードウェアデバイスをソフトウェアでエミュレートします。チップセット（i440FX、Q35）、PCIe バス、USB コントローラ、ネットワークカード、ディスクコントローラといった主要なデバイスがサポートされています。これらのデバイスは、実機とほぼ同じレジスタマップと動作を持ち、ゲストファームウェアやOS がハードウェアの違いを意識することなく動作できます。また、virtio という準仮想化デバイスもサポートされており、ネイティブに近いパフォーマンスを実現できます。
 
-3. **デバッグ機能**
-   - GDB サーバー機能
-   - シリアルコンソール出力
+QEMU のもう一つの重要な機能は、**デバッグ機能**です。QEMU は、GDB サーバー機能を内蔵しており、`-s` オプションで有効化できます。GDB を QEMU に接続することで、ゲスト OS やファームウェアのステップ実行、ブレークポイント設定、レジスタやメモリの確認が可能です。また、シリアルコンソール出力をサポートしており、`-serial stdio` オプションで標準出力にリダイレクトできます。これにより、ファームウェアからのデバッグメッセージをリアルタイムで確認できます。さらに、QEMU モニターコンソール（`Ctrl-A c` で切り替え）により、仮想マシンの状態確認、デバイスの追加・削除、スナップショットの作成といった操作が可能です。
 
 ### QEMUの仕組み
+
+QEMU の内部アーキテクチャは、複数のコンポーネントで構成されています。以下の図は、QEMU の主要コンポーネントとゲスト OS の関係を示しています。
 
 ```mermaid
 graph TB
@@ -153,25 +149,41 @@ graph TB
     style E fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
+**CPU エミュレータ**は、ゲスト CPU の命令を実行する責任を持ちます。QEMU は、TCG (Tiny Code Generator) と KVM (Kernel-based Virtual Machine) の2つの実行モードをサポートしています。TCG モードでは、ゲスト命令をホスト命令に動的に変換（JIT コンパイル）して実行します。KVM モードでは、Linux カーネルの KVM 機能を利用して、ハードウェア仮想化支援機能（Intel VT-x、AMD-V）により、ゲスト命令を直接 CPU で実行します。
+
+**デバイスモデル**は、チップセットと周辺デバイスをエミュレートします。i440FX は古い Intel チップセットのエミュレーションであり、Q35 は現代の Intel チップセットをエミュレートします。Q35 は PCIe をネイティブサポートし、AHCI、Intel HD Audio といった現代的なデバイスを提供します。本書では、主に Q35 を使用します。
+
+**ブロックデバイス**は、ディスクイメージ（disk.img、qcow2 など）をエミュレートされたストレージデバイスとして提供します。IDE、SATA、virtio-blk といった様々なインターフェースをサポートします。**ネットワーク**は、virtio-net、e1000 といったネットワークカードをエミュレートし、ゲスト OS にネットワーク接続を提供します。
+
 ### QEMU の2つのモード
 
+QEMU は、CPU エミュレーションの方法として、TCG と KVM の2つのモードを提供します。これらのモードの違いを理解することは、適切な環境選択に重要です。
+
 **1. TCG (Tiny Code Generator) モード**
-- 純粋なエミュレーション
-- 異なるアーキテクチャでも動作（例: ARM上でx86をエミュレート）
-- 速度は遅い
+
+TCG は、純粋なソフトウェアエミュレーションです。ゲスト CPU の命令を逐次解釈し、ホスト CPU の命令に変換して実行します。このプロセスは、JIT (Just-In-Time) コンパイルによって最適化されており、命令ブロック単位で変換されたコードがキャッシュされます。
+
+TCG モードの最大の利点は、**クロスアーキテクチャエミュレーション**が可能なことです。例えば、x86_64 ホスト上で ARM ファームウェアを実行したり、ARM ホスト上で RISC-V OS を実行したりできます。これにより、ターゲットアーキテクチャのハードウェアを持っていなくても、ファームウェア開発が可能です。
+
+しかし、TCG モードの欠点は、**速度が遅い**ことです。命令の変換オーバーヘッドにより、実機の 1/10 から 1/50 程度の速度になります。メモリアクセスや I/O 操作も、すべてソフトウェアでエミュレートされるため、さらに遅くなります。大規模なファームウェアや OS のブートには、数分かかることもあります。
 
 **2. KVM (Kernel-based Virtual Machine) モード**
-- ハードウェア仮想化支援機能を利用
-- ホストとゲストが同じアーキテクチャの場合のみ
-- 速度はネイティブに近い
 
-**本書では主にKVMモードを使用します。**
+KVM は、Linux カーネルに統合された仮想化技術です。Intel VT-x や AMD-V といったハードウェア仮想化支援機能を利用し、ゲスト CPU 命令を直接ホスト CPU で実行します。QEMU は、KVM の制御インターフェースとして機能し、デバイスエミュレーションと I/O 処理を担当します。
+
+KVM モードの最大の利点は、**速度がネイティブに近い**ことです。ゲスト命令は、ハードウェアによって直接実行されるため、オーバーヘッドは最小限です。通常、実機の 80-95% の性能を発揮します。メモリアクセスも、ハードウェアのメモリ仮想化機能（Intel EPT、AMD NPT）により高速化されます。
+
+KVM モードの制約は、**ホストとゲストが同じアーキテクチャである必要がある**ことです。x86_64 ホストでは x86_64 ゲストのみ、ARM ホストでは ARM ゲストのみが KVM で実行できます。また、KVM は Linux ホストでのみ利用可能です（Windows では Hyper-V、macOS では Hypervisor.framework が類似の機能を提供）。
+
+**本書での使用方針：**
+
+本書では、主に **KVM モード**を使用します。x86_64 ホスト上で x86_64 UEFI ファームウェア（OVMF）を実行するため、KVM の恩恵を最大限に受けられます。高速な起動と実行により、試行錯誤を効率的に繰り返せます。ただし、ARM や RISC-V ファームウェアを扱う章では、TCG モードも使用します。
 
 ## OVMF とは
 
 ### OVMFの位置づけ
 
-**OVMF (Open Virtual Machine Firmware)** は、QEMU/KVM向けのUEFIファームウェア実装です。
+**OVMF (Open Virtual Machine Firmware)** は、QEMU/KVM 向けの UEFI ファームウェア実装です。EDK II の OvmfPkg パッケージとして提供されており、QEMU の仮想ハードウェア上で完全な UEFI 環境を提供します。OVMF は、実機の UEFI ファームウェアと同じアーキテクチャを持ち、UEFI Specification に完全準拠しています。
 
 ```mermaid
 graph LR
@@ -184,38 +196,72 @@ graph LR
     style D fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
+OVMF の開発は、2006年に Intel によって開始されました。当初の目的は、仮想マシンで UEFI 環境をテストすることでした。従来、仮想マシンは Legacy BIOS（SeaBIOS など）しかサポートしておらず、UEFI の開発とテストには実機が必要でした。OVMF の登場により、仮想環境での UEFI 開発が可能になり、開発効率が大幅に向上しました。
+
 ### OVMFの特徴
 
-**メリット:**
-- EDK IIベースなので、実機のUEFIと同じアーキテクチャ
-- 完全なUEFI環境
-- Secure Boot対応
+OVMF は、仮想環境での UEFI 開発に最適化された設計を持っています。以下は、OVMF の主な特徴です。
 
-**制限:**
-- 仮想ハードウェアのみ対応
-- 実機特有の問題は再現できない
+**メリット：**
+
+第一のメリットは、**EDK II ベースであること**です。OVMF は、EDK II のコードベースを使用しているため、実機の UEFI ファームウェアと同じアーキテクチャと API を持ちます。EDK II で開発したドライバやアプリケーションは、OVMF でテストでき、実機でもそのまま動作します。逆に、OVMF でデバッグしたコードは、実機にも適用できます。この互換性により、開発とテストのサイクルが効率化されます。
+
+第二のメリットは、**完全な UEFI 環境**を提供することです。OVMF は、UEFI Specification のすべての主要機能をサポートしています。Boot Services、Runtime Services、プロトコル、ドライバモデル、UEFI Shell といった標準機能がすべて利用可能です。また、GOP (Graphics Output Protocol) による画面出力、Simple File System Protocol によるファイルアクセス、Network Protocol による HTTP Boot といった高度な機能もサポートされています。
+
+第三のメリットは、**Secure Boot 対応**です。OVMF は、UEFI Secure Boot を完全にサポートしており、署名検証、鍵管理、信頼チェーンといった機能をテストできます。Secure Boot の実装とテストは実機では困難ですが、OVMF を使用することで、安全に実験できます。
+
+第四のメリットは、**高速なビルドとデプロイ**です。OVMF のビルドは、実機のファームウェアよりも高速です（通常 1-2 分）。ビルドした OVMF.fd ファイルを QEMU に渡すだけで、即座にテストできます。実機では Flash ROM への書き込みが必要ですが、OVMF ではファイルコピーだけで済みます。
+
+**制限：**
+
+OVMF の主な制限は、**仮想ハードウェアのみ対応**していることです。OVMF は、QEMU が提供する仮想デバイス（Q35 チップセット、virtio、e1000 など）にのみ対応しており、実機固有のデバイス（特定のチップセット、組込みコントローラ、センサーなど）はサポートしません。したがって、実機固有のドライバ開発には使用できません。
+
+もう一つの制限は、**実機特有の問題は再現できない**ことです。ハードウェアタイミング、割り込みレイテンシ、キャッシュコヒーレンシ、電源管理といった実機固有の問題は、OVMF では再現されません。また、実機の BIOS ベンダー（AMI、Insyde、Phoenix）が実装している独自機能や最適化も、OVMF には含まれません。
 
 ### OVMF の構成
 
+OVMF.fd ファイルは、単一のバイナリイメージですが、内部的には複数のブートフェーズで構成されています。以下は、OVMF の内部構造を示したものです。
+
 ```
-OVMF.fd
+OVMF.fd (4MB または 2MB)
 ├─ SEC (Security Phase)
+│   └─ ResetVector.asm (リセット時の最初の命令)
+│   └─ SEC Core (PEI への遷移)
 ├─ PEI (Pre-EFI Initialization)
-│   ├─ メモリ初期化
-│   └─ CPUフェーズ移行
+│   ├─ PEI Core (PEI フェーズの制御)
+│   ├─ Memory Initialization PEIM (仮想メモリの検出)
+│   ├─ CPU Initialization PEIM (仮想 CPU の設定)
+│   └─ DXE IPL PEIM (DXE への遷移)
 ├─ DXE (Driver Execution Environment)
-│   ├─ PCIバスドライバ
-│   ├─ ディスクドライバ
-│   └─ ネットワークドライバ
-└─ BDS (Boot Device Selection)
-    └─ ブートマネージャ
+│   ├─ DXE Core (DXE フェーズの制御)
+│   ├─ PCIe Bus Driver (PCIe デバイス列挙)
+│   ├─ Disk Driver (virtio-blk, AHCI)
+│   ├─ Network Driver (virtio-net, e1000)
+│   ├─ GOP Driver (Graphics Output Protocol)
+│   └─ ACPI Table Driver (ACPI テーブル生成)
+├─ BDS (Boot Device Selection)
+│   ├─ Boot Manager (ブートデバイス選択)
+│   └─ UEFI Shell (組込みシェル、オプション)
+└─ Runtime Services
+    ├─ Variable Services (UEFI 変数の読み書き)
+    └─ Time Services (RTC アクセス)
 ```
+
+**SEC (Security Phase)** は、リセット後の最初のフェーズです。ResetVector.asm が CPU のリセットベクタ（0xFFFFFFF0）に配置され、ここから実行が始まります。SEC は、CPU を 16-bit リアルモードから 32-bit プロテクトモード、そして 64-bit ロングモードへ遷移させます。また、最小限のスタック（一時 RAM）を設定し、PEI Core を呼び出します。
+
+**PEI (Pre-EFI Initialization)** は、プラットフォームの初期化を担当します。OVMF の PEI は、QEMU が提供する fw_cfg インターフェースを使用して、仮想マシンのメモリサイズや CPU 数を取得します。メモリマップを構築し、HOB (Hand-Off Block) として DXE に渡します。CPU の初期化（GDT、IDT の設定）も行います。
+
+**DXE (Driver Execution Environment)** は、ドライバの実行環境です。DXE Core が起動し、Protocol Database を初期化します。その後、各種ドライバがロードされ、デバイスが列挙されます。OVMF の DXE ドライバは、QEMU の仮想デバイス（PCIe、virtio-blk、virtio-net、GOP など）をサポートします。また、ACPI テーブルを生成し、OS に渡す準備をします。
+
+**BDS (Boot Device Selection)** は、ブートデバイスの選択とブートマネージャの実行を担当します。OVMF の BDS は、ディスク、ネットワーク、UEFI Shell といったブートオプションを列挙し、優先順位に従ってブートを試みます。UEFI Shell が組み込まれている場合、対話的にコマンドを実行できます。
+
+**Runtime Services** は、OS 起動後も利用可能なサービスです。UEFI 変数（Boot Order、Secure Boot の設定など）の読み書きや、RTC (Real-Time Clock) へのアクセスを提供します。これらのサービスは、OS カーネルから呼び出されます。
 
 ## EDK II とは
 
 ### EDK IIの役割
 
-**EDK II (EFI Development Kit II)** は、UEFIファームウェアを開発するための**フレームワーク**です。
+**EDK II (EFI Development Kit II)** は、UEFI ファームウェアを開発するための**フレームワーク**です。元々 Intel によって開発され、2004年にオープンソース化されました。現在は TianoCore プロジェクトとして、業界標準の UEFI 開発環境として広く使用されています。EDK II は、単なるコード集ではなく、ビルドシステム、ライブラリ、ドライバ、ツールを統合した完全な開発フレームワークです。
 
 ```mermaid
 graph TB
@@ -234,33 +280,87 @@ graph TB
     style E fill:#f9f,stroke:#333
 ```
 
+EDK II の役割は、UEFI 開発の複雑さを抽象化することです。UEFI Specification は、2,000 ページを超える膨大な仕様書であり、すべてを一から実装するのは現実的ではありません。EDK II は、仕様のほぼすべてを実装済みのライブラリとして提供し、開発者はプラットフォーム固有の部分だけを実装すれば良いようにします。
+
 ### なぜEDK IIを使うのか
 
+EDK II を使用する理由は、複数の観点から説明できます。
+
 **1. 業界標準**
-- Intel, AMD, ARM など主要ベンダーが使用
-- 実機のファームウェアも多くがEDK IIベース
+
+EDK II は、UEFI ファームウェア開発の事実上の業界標準です。Intel、AMD、ARM といった主要な CPU ベンダーは、すべて EDK II をベースにリファレンス実装を提供しています。また、AMI、Insyde、Phoenix という3大 BIOS ベンダーも、EDK II を基盤として独自の製品を構築しています。
+
+EDK II が業界標準となった理由は、UEFI Forum との密接な関係です。UEFI Specification の策定と EDK II の開発は、相互にフィードバックを受けながら進化しています。仕様書に新しい機能が追加されると、EDK II にもその参照実装が追加されます。逆に、EDK II で実装された機能が仕様書に反映されることもあります。この協調により、EDK II は常に最新の UEFI Specification に準拠しています。
+
+業界標準であることの利点は、互換性とエコシステムです。EDK II で開発したコードは、様々なプラットフォーム（Intel、AMD、ARM）で再利用できます。また、膨大な数のサンプルコード、ドキュメント、コミュニティサポートが利用可能です。
 
 **2. 豊富なライブラリ**
-- UEFI仕様のプロトコルがすべて実装済み
-- ドライバ、ライブラリが充実
+
+EDK II は、UEFI Specification で定義されているすべてのプロトコルを実装済みです。例えば、EFI_SIMPLE_FILE_SYSTEM_PROTOCOL、EFI_GRAPHICS_OUTPUT_PROTOCOL、EFI_USB_IO_PROTOCOL といった主要プロトコルは、すべて MdeModulePkg に含まれています。開発者は、これらのプロトコルを利用するだけで、複雑な機能を実装できます。
+
+また、EDK II は、豊富なライブラリを提供しています。BaseLib は、文字列操作、メモリ操作、ビット操作といった基本的な関数を提供します。UefiLib は、UEFI 固有の操作（プロトコルのインストール、イベント処理など）を簡単に行える関数を提供します。DebugLib は、デバッグメッセージの出力を統一的に扱えるようにします。PrintLib は、printf 風の文字列フォーマット機能を提供します。
+
+これらのライブラリは、実機で動作することが検証されており、バグが少なく、パフォーマンスも最適化されています。ゼロから実装する場合と比べて、開発時間を大幅に短縮できます。
 
 **3. モジュラーな設計**
-- 再利用可能なコンポーネント
-- プラットフォーム固有部分と共通部分の分離
+
+EDK II の設計は、モジュラー性を重視しています。コードは、INF (Information) ファイルで定義されたモジュール単位で構成されます。各モジュールは、独立してビルド可能であり、依存関係が明示的に定義されています。
+
+このモジュラー設計により、再利用性が向上します。例えば、USB ホストコントローラドライバは、MdeModulePkg に含まれており、どのプラットフォームでも使用できます。プラットフォーム開発者は、USB 固有のコードを書く必要がなく、既存のドライバをリンクするだけです。
+
+また、プラットフォーム固有部分と共通部分が明確に分離されています。MdePkg と MdeModulePkg は、プラットフォームに依存しない共通コードであり、OvmfPkg や実機の Platform Package は、プラットフォーム固有のコードです。この分離により、プラットフォームの移植が容易になります。
 
 ### EDK IIのディレクトリ構造
 
+EDK II のソースコードは、パッケージ単位で構成されています。各パッケージは、特定の目的や機能を持ち、独立してビルド可能です。以下は、EDK II の主要なディレクトリ構造です。
+
 ```
 edk2/
-├─ MdePkg/               # 基本定義・ライブラリ
-├─ MdeModulePkg/         # 標準モジュール
+├─ MdePkg/               # Module Development Environment Package
+│                        # UEFI/PI の基本定義、ライブラリ
+│                        # すべてのモジュールが依存
+├─ MdeModulePkg/         # Module Development Environment Module Package
+│                        # 標準ドライバ、コアコンポーネント
+│                        # DXE Core, PEI Core, USB, Disk, Network など
 ├─ SecurityPkg/          # セキュリティ関連
+│                        # Secure Boot, TPM, Hash ライブラリ
 ├─ NetworkPkg/           # ネットワークスタック
-├─ OvmfPkg/              # QEMU/KVM 用
-├─ EmulatorPkg/          # エミュレータ用
-├─ ArmPkg/               # ARM アーキテクチャ
-└─ ...
+│                        # HTTP Boot, iSCSI, DNS, TLS
+├─ CryptoPkg/            # 暗号化ライブラリ
+│                        # OpenSSL ラッパー、Hash, RSA, AES
+├─ OvmfPkg/              # Open Virtual Machine Firmware Package
+│                        # QEMU/KVM 用プラットフォーム
+├─ EmulatorPkg/          # エミュレータ用プラットフォーム
+│                        # ホスト OS 上で実行可能な UEFI
+├─ ArmPkg/               # ARM アーキテクチャ共通
+│                        # ARM 固有の CPU、MMU、割り込み処理
+├─ ArmPlatformPkg/       # ARM プラットフォーム固有
+│                        # 特定の ARM ボード向け実装
+├─ ShellPkg/             # UEFI Shell
+│                        # コマンドラインインターフェース
+├─ FatPkg/               # FAT ファイルシステム
+│                        # FAT12/16/32 サポート
+├─ UefiCpuPkg/           # x86/x64 CPU 関連
+│                        # CPU 初期化、MP Services
+├─ PcAtChipsetPkg/       # レガシー PC/AT チップセット
+│                        # 8259 PIC, 8254 PIT, RTC
+└─ BaseTools/            # ビルドツール
+                         # Python ベースのビルドシステム
 ```
+
+**MdePkg (Module Development Environment Package)** は、最も重要なパッケージです。UEFI Specification と PI (Platform Initialization) Specification の基本定義（データ型、構造体、プロトコル定義）が含まれます。また、BaseLib、UefiLib、DebugLib といった基本ライブラリも提供します。すべての EDK II モジュールは、MdePkg に依存します。
+
+**MdeModulePkg (Module Development Environment Module Package)** は、標準的なドライバとコアコンポーネントを提供します。DXE Core、PEI Core、BDS (Boot Device Selection) といったブートフェーズの実装が含まれます。また、USB ホストコントローラドライバ、ディスクドライバ、ネットワークドライバといった汎用ドライバも含まれます。MdeModulePkg は、プラットフォームに依存しない実装を提供し、様々なプラットフォームで再利用されます。
+
+**OvmfPkg (Open Virtual Machine Firmware Package)** は、QEMU/KVM 向けのプラットフォーム実装です。本書で主に使用するパッケージであり、QEMU の仮想ハードウェアに対応したファームウェアを提供します。OvmfPkg は、MdePkg と MdeModulePkg を利用しつつ、QEMU 固有の初期化コード（fw_cfg インターフェース、Q35 チップセット対応など）を実装しています。
+
+**SecurityPkg** は、セキュリティ関連の機能を提供します。Secure Boot の実装、TPM (Trusted Platform Module) ドライバ、Hash ライブラリ（SHA-256、SHA-512 など）が含まれます。セキュアなファームウェアの実装に不可欠なパッケージです。
+
+**NetworkPkg** は、ネットワークスタックを提供します。HTTP Boot、iSCSI、DNS、TLS といった高度なネットワーク機能が実装されています。ネットワーク経由でのブート（PXE、HTTP Boot）をサポートする場合に使用します。
+
+**ShellPkg** は、UEFI Shell の実装です。UEFI Shell は、コマンドラインインターフェースであり、ファイル操作、デバイス情報の表示、簡単なスクリプト実行が可能です。開発とデバッグに非常に有用です。
+
+これらのパッケージは、明確な依存関係を持っています。MdePkg は他のパッケージに依存せず、すべての基盤となります。MdeModulePkg は MdePkg に依存します。OvmfPkg は MdePkg と MdeModulePkg に依存し、必要に応じて SecurityPkg や NetworkPkg も使用します。この階層構造により、コードの再利用性と保守性が向上しています。
 
 ## 学習に使用するツール
 

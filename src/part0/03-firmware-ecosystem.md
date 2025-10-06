@@ -254,99 +254,196 @@ PC を起動して表示される BIOS 設定画面には、「American Megatren
 
 ### QEMU/KVM
 
-**用途**: x86_64 仮想化
-**URL**: https://www.qemu.org/
+QEMU (Quick Emulator) は、オープンソースのマシンエミュレータ・バーチャライザであり、ファームウェア開発において最も重要なツールの一つです。QEMU を使用することで、実機なしでファームウェアの開発とテストが可能になり、開発サイクルを大幅に加速できます。KVM (Kernel-based Virtual Machine) は、Linux カーネルに統合された仮想化技術であり、QEMU と組み合わせることで高速な仮想化環境を実現します。
 
-**OVMF との組み合わせ:**
+**QEMU の主な機能：**
+
+QEMU は、完全なシステムエミュレーションを提供します。CPU、メモリ、ディスク、ネットワーク、グラフィックスといったすべてのハードウェアコンポーネントをソフトウェアでエミュレートし、実機と同じ動作をシミュレートします。さらに、GDB との統合により、ファームウェアのステップ実行、ブレークポイントの設定、メモリダンプといった高度なデバッグが可能です。また、スナップショット機能により、特定の状態を保存し、後で復元できるため、再現性のあるテストが実現できます。
+
+**OVMF との組み合わせ：**
+
+OVMF (Open Virtual Machine Firmware) は、EDK II ベースの UEFI ファームウェアであり、QEMU/KVM 環境で動作するように設計されています。OvmfPkg パッケージとして EDK II に含まれており、仮想環境での UEFI 開発の標準となっています。以下は、QEMU で OVMF を使用して仮想マシンを起動する例です。
 
 ```bash
-# UEFI ファームウェアで起動
+# UEFI ファームウェア (OVMF) で起動
 qemu-system-x86_64 \
   -bios /usr/share/ovmf/OVMF.fd \
-  -hda disk.img
+  -hda disk.img \
+  -m 4G \
+  -smp 4 \
+  -serial stdio
+
+# デバッグ用オプション付き
+qemu-system-x86_64 \
+  -bios /usr/share/ovmf/OVMF.fd \
+  -hda disk.img \
+  -m 4G \
+  -s -S \
+  -serial stdio
+# -s: GDB サーバをポート 1234 で起動
+# -S: 起動時に一時停止（GDB 接続待ち）
 ```
 
-**メリット:**
-- 高速な試行錯誤
-- デバッグ容易
-- 実機を壊すリスクなし
+**QEMU を使用するメリット：**
+
+QEMU を使用する最大のメリットは、高速な試行錯誤が可能になることです。実機では、BIOS の更新に数分かかる場合がありますが、QEMU では数秒で起動できます。また、実機を壊すリスクがないため、安全に実験できます。BIOS Flash の書き込みに失敗すると、実機が起動不能になる可能性がありますが、QEMU ではその心配がありません。さらに、デバッグが容易であり、GDB との統合により、ブートプロセスのあらゆる段階でステップ実行やメモリダンプが可能です。再現性の高いテストも実現でき、スナップショット機能により、特定の状態を保存し、何度でも同じ条件でテストできます。
+
+**QEMU の制約：**
+
+QEMU は万能ではなく、いくつかの制約があります。完全なハードウェアエミュレーションではないため、実機固有の問題（タイミング、割り込み、ハードウェアバグなど）は再現されません。また、パフォーマンスが実機と異なるため、起動時間やメモリアクセス速度が実機とは一致しません。実機固有デバイス（特定のチップセット、組込みコントローラなど）は、QEMU でエミュレートできないこともあります。
 
 ### コンパイラとビルドツール
 
+ファームウェア開発には、複数のコンパイラとビルドツールが必要です。これらのツールは、ソースコードを実行可能なバイナリに変換し、ファームウェアイメージを生成します。
+
 **GCC / Clang**
-- C言語コンパイラ
-- EDK II は GCC 5+ を推奨
+
+GCC (GNU Compiler Collection) と Clang は、C 言語コンパイラであり、EDK II のビルドに使用されます。EDK II は GCC 5 以降を推奨しており、クロスコンパイル（x86_64 ホストから ARM64 ターゲットへのビルドなど）にも対応しています。GCC は、最適化オプション（-O2、-Os など）により、コードサイズと実行速度のバランスを調整できます。ファームウェアでは、Flash ROM のサイズ制約があるため、コードサイズの最適化が重要です。
+
+Clang は、LLVM プロジェクトの一部であり、GCC との互換性を持ちつつ、より詳細なエラーメッセージと静的解析機能を提供します。一部の組織では、Clang を使用してファームウェアをビルドし、コード品質を向上させています。
 
 **Python**
-- ビルドスクリプト
-- 設定ファイル生成
+
+Python は、EDK II のビルドシステムで広く使用されています。EDK II の build コマンド自体が Python で実装されており、.inf ファイルや .dec ファイルの解析、依存関係の解決、ビルドスクリプトの生成を行います。また、設定ファイル（.dsc ファイル）の解析や、プラットフォーム固有のビルドオプションの適用にも Python が使用されます。
+
+Python スクリプトは、ACPI テーブルの生成、バイナリのパッチ適用、署名の追加といったビルド後の処理にも使用されます。ファームウェア開発者は、Python の基本的な知識を持っていることが推奨されます。
 
 **NASM / YASM**
-- アセンブラ
-- 初期起動コード
+
+NASM (Netwide Assembler) と YASM (Yet Another ASseMbler) は、x86/x86_64 アセンブラです。ファームウェアの初期起動コードは、C 言語ではなくアセンブリ言語で記述する必要があります。リセットベクタから最初の命令、リアルモードからプロテクトモードへの遷移、GDT や IDT の設定といった低レベルの処理は、アセンブリでしか記述できません。
+
+EDK II では、.nasm ファイルと .asm ファイルが初期起動コードとして含まれており、NASM でアセンブルされます。YASM は NASM 互換のアセンブラであり、一部のプラットフォームで使用されます。
+
+**IASL (iASL Compiler)**
+
+IASL は、ACPI Source Language (ASL) を ACPI Machine Language (AML) にコンパイルするツールです。ACPI テーブルは、ハードウェア構成を OS に伝えるために不可欠であり、DSDT や SSDT といったテーブルを ASL で記述し、IASL でコンパイルします。
+
+IASL は、構文エラーのチェックだけでなく、セマンティックエラー（論理的な矛盾）や警告も報告します。ACPI テーブルの誤りは、OS の起動失敗やデバイスの認識不良につながるため、IASL の出力を注意深く確認する必要があります。
 
 ### デバッグツール
 
-**GDB**
-- QEMU と組み合わせてステップ実行
-- シンボル情報付きデバッグ
+ファームウェアのデバッグは、通常のアプリケーション開発よりもはるかに困難です。OS が起動していない状態でのデバッグであり、標準的なデバッグツールが使用できないためです。以下のツールは、ファームウェア開発において不可欠です。
+
+**GDB (GNU Debugger)**
+
+GDB は、標準的なデバッガであり、QEMU と組み合わせてファームウェアのデバッグに使用されます。QEMU の GDB サーバ機能（-s オプション）により、GDB をリモートデバッガとして接続できます。以下は、GDB を使用してファームウェアをデバッグする例です。
+
+```bash
+# Terminal 1: QEMU を GDB サーバモードで起動
+qemu-system-x86_64 \
+  -bios OVMF.fd \
+  -s -S \
+  -hda disk.img
+
+# Terminal 2: GDB を接続
+gdb
+(gdb) target remote :1234
+(gdb) break *0xFFFFFFF0  # リセットベクタにブレークポイント
+(gdb) continue
+```
+
+GDB を使用することで、レジスタの確認（info registers）、メモリダンプ（x/32x 0xFFFFFFF0）、ステップ実行（stepi）、バックトレース（bt）といった操作が可能になります。シンボル情報（.debug ファイル）を読み込むことで、関数名や変数名でデバッグできます。
 
 **シリアルコンソール**
-- ログ出力
-- 実機デバッグに必須
 
-**JTAG/SWD**
-- ハードウェアデバッガ
-- 実機での低レベルデバッグ
+シリアルコンソールは、ファームウェアからのログ出力を受け取るための通信チャネルです。実機デバッグでは、画面出力（GOP）が使用できない場合があり、シリアルポート経由でのログ出力が唯一のデバッグ手段となります。
+
+EDK II では、DebugLib を使用してデバッグメッセージを出力できます。DebugLib は、シリアルポート経由でメッセージを送信し、ホスト側のターミナルエミュレータ（minicom、screen、putty など）で受信できます。
+
+```c
+DEBUG ((DEBUG_INFO, "Initializing PCIe...\n"));
+DEBUG ((DEBUG_ERROR, "Failed to initialize SATA: %r\n", Status));
+```
+
+QEMU では、`-serial stdio` オプションにより、シリアル出力を標準出力にリダイレクトできます。実機では、USB シリアルアダプタや UART コネクタを使用して、ホスト PC に接続します。
+
+**JTAG/SWD (ハードウェアデバッガ)**
+
+JTAG (Joint Test Action Group) と SWD (Serial Wire Debug) は、ハードウェアレベルのデバッグインターフェースです。CPU に直接接続し、プロセッサの内部状態（レジスタ、メモリ、実行フロー）を監視・制御できます。
+
+JTAG デバッガは、実機での低レベルデバッグに不可欠です。Flash ROM の書き込みに失敗してシステムが起動しなくなった場合でも、JTAG デバッガを使用して復旧できます。また、タイミングクリティカルな問題（割り込み、キャッシュコヒーレンシなど）のデバッグにも使用されます。
+
+商用の JTAG デバッガとしては、Lauterbach TRACE32、Segger J-Link、ARM DSTREAM などがあります。これらは高価ですが、プロフェッショナルなファームウェア開発では標準的なツールです。
 
 ## コミュニティとリソース
 
+ファームウェア開発は、単独では完結しません。エコシステム全体を支えるコミュニティが、知識の共有、問題解決、技術の進化を推進しています。これらのコミュニティに参加することで、最新の技術動向を把握し、困難な問題を解決できます。
+
 ### UEFI Forum
 
-**URL**: https://uefi.org/
+UEFI Forum は、UEFI と ACPI 仕様を策定する業界団体です。1994年に Intel が EFI 仕様を開発し、2005年に業界標準化のために UEFI Forum が設立されました。現在、AMD、Intel、ARM、Microsoft、Apple、IBM、Lenovo、HP といった主要ベンダーを含む 300 以上の企業・組織がメンバーとして参加しています。
 
-**役割:**
-- UEFI/ACPI 仕様の策定
-- 業界標準の推進
-- ワーキンググループの運営
+**UEFI Forum の役割：**
 
-**メンバー:**
-- AMD, Intel, ARM, Microsoft, Apple など主要ベンダー
-- 300以上の企業・組織
+UEFI Forum の最も重要な役割は、UEFI Specification と ACPI Specification の策定と維持です。仕様の策定は、複数のワーキンググループによって行われます。例えば、Security Sub-team は Secure Boot や Measured Boot といったセキュリティ機能を担当し、Platform Initialization Working Group は PEI フェーズや DXE フェーズの仕様を策定します。Network Sub-team は HTTP Boot や Wi-Fi といったネットワーク機能を扱います。
+
+仕様の更新は、定期的に行われます。通常、年に 1-2 回のマイナーアップデートがあり、新機能の追加やバグ修正が含まれます。メジャーアップデート（例: v2.9 から v2.10）は、2-3 年ごとに行われ、大幅な機能追加やアーキテクチャの変更が含まれます。
+
+**参加方法：**
+
+UEFI Forum への参加は、Promoter、Contributor、Adopter の3つのレベルがあります。Promoter メンバーは、仕様策定の意思決定に参加でき、年会費は高額です。Contributor メンバーは、ワーキンググループに参加し、技術的な貢献ができます。Adopter メンバーは、仕様へのアクセスと技術サポートを受けられます。
+
+個人開発者にとって、UEFI Forum の仕様書は無料で公開されており、誰でも https://uefi.org/specifications からダウンロードできます。仕様書を読むことで、UEFI の詳細を理解し、正しい実装を行えます。
 
 ### TianoCore
 
-**URL**: https://www.tianocore.org/
-**GitHub**: https://github.com/tianocore
+TianoCore は、EDK II の開発とサポートを行うオープンソースコミュニティです。元々 Intel によって開発された EDK II は、2004年にオープンソース化され、TianoCore プロジェクトとして独立しました。現在、Intel、AMD、ARM、HP、IBM といった企業のエンジニアが、ボランティアとしてコードレビューやバグ修正に貢献しています。
 
-**役割:**
-- EDK II の開発・保守
-- コミュニティサポート
+**TianoCore の活動：**
 
-**リソース:**
-- メーリングリスト: https://edk2.groups.io/
-- Wiki: https://github.com/tianocore/tianocore.github.io/wiki
-- バグトラッカー: https://bugzilla.tianocore.org/
+TianoCore の中核活動は、EDK II のコードベースの保守とレビューです。GitHub (https://github.com/tianocore/edk2) でコードがホストされており、誰でもプルリクエストを送信できます。コードレビューは、TianoCore のメンテナによって行われ、コーディング規約への準拠、バグの有無、パフォーマンスへの影響がチェックされます。
+
+TianoCore は、複数のサブプロジェクトを持っています。edk2-platforms は、特定のプラットフォーム（Raspberry Pi、Intel Platform など）の実装を提供します。edk2-test は、UEFI Specification への適合性をテストするツールです。edk2-staging は、実験的な機能の開発を行う場所です。
+
+**コミュニティリソース：**
+
+TianoCore の主要なコミュニケーションチャネルは、メーリングリスト (https://edk2.groups.io/) です。devel@edk2.groups.io では、技術的な議論、パッチのレビュー、質問が行われます。メーリングリストのアーカイブは公開されており、過去の議論を検索できます。
+
+Wiki (https://github.com/tianocore/tianocore.github.io/wiki) には、ドキュメント、チュートリアル、FAQが含まれています。特に、"Getting Started with EDK II" や "Build Instructions" といったページは、初心者にとって有用です。
+
+バグトラッカー (https://bugzilla.tianocore.org/) では、バグレポートと機能要求が管理されています。EDK II の既知の問題を確認したり、新しいバグを報告したりできます。
+
+**TianoCore への貢献：**
+
+TianoCore への貢献は、コードだけでなく、ドキュメントの改善、バグレポート、質問への回答といった形でも可能です。プルリクエストを送信する際は、Developer Certificate of Origin (DCO) に署名し、TianoCore のコーディング規約 (EDK II C Coding Standards Specification) に従う必要があります。
 
 ### coreboot コミュニティ
 
-**URL**: https://www.coreboot.org/
+coreboot は、オープンソースのファームウェアプロジェクトであり、軽量で高速な起動を実現します。Google Chromebook で広く採用されており、組込みシステムやセキュリティ重視のユーザーに人気があります。coreboot コミュニティは、Linux カーネルコミュニティと同様に、メーリングリストと IRC を中心に活動しています。
 
-**リソース:**
-- IRC: #coreboot @ libera.chat
-- メーリングリスト
-- ドキュメント: https://doc.coreboot.org/
+**coreboot の特徴：**
+
+coreboot の設計思想は、最小限の初期化のみをファームウェアで行い、残りはペイロード（OS やブートローダ）に委ねることです。これにより、ファームウェアのサイズが小さくなり、起動時間が短縮されます。また、ペイロードとして UEFI (TianoCore payload)、SeaBIOS (Legacy BIOS)、Linux kernel (LinuxBoot) を選択できます。
+
+**コミュニティリソース：**
+
+coreboot の主要なコミュニケーションチャネルは、IRC (#coreboot @ libera.chat) とメーリングリスト (coreboot@coreboot.org) です。IRC では、リアルタイムで技術的な議論や質問ができます。メーリングリストでは、パッチのレビューや長期的な議論が行われます。
+
+coreboot のドキュメント (https://doc.coreboot.org/) は、非常に充実しており、ビルド手順、ポーティングガイド、アーキテクチャの説明が含まれています。特に、"Getting Started" と "Supported Motherboards" は、初心者にとって有用です。
+
+**coreboot への貢献：**
+
+coreboot は、新しいマザーボードのサポート追加を歓迎しています。ポーティングガイド (https://doc.coreboot.org/getting_started/porting.html) に従って、新しいボードの初期化コードを追加できます。また、バグ修正やドキュメントの改善も重要な貢献です。
 
 ### その他のコミュニティ
 
 **LKML (Linux Kernel Mailing List)**
-- カーネル側のブート処理
+
+Linux カーネルのメーリングリスト (https://lkml.org/) では、カーネル側のブート処理に関する議論が行われます。UEFI ブートスタブ、EFI Runtime Services、ACPI ドライバといったトピックが扱われます。ファームウェア開発者にとって、カーネルがファームウェアに何を期待しているかを理解することは重要です。
 
 **OSdev.org**
-- OS開発者向けフォーラム
-- UEFI/BIOS の質問も活発
+
+OSdev.org (https://forum.osdev.org/) は、OS 開発者向けのフォーラムであり、UEFI/BIOS に関する質問も活発です。初心者からエキスパートまで、幅広いレベルの開発者が参加しています。特に、"Getting Started" と "Boot Process" のセクションは、ブートプロセスの理解に役立ちます。
+
+OSdev Wiki (https://wiki.osdev.org/) には、BIOS、UEFI、ブートローダ、メモリマップといったトピックの詳細な説明があります。実装例やコードスニペットも豊富であり、実践的な学習リソースとなっています。
+
+**Reddit と Stack Overflow**
+
+Reddit の r/osdev (https://www.reddit.com/r/osdev/) や Stack Overflow の UEFI タグ (https://stackoverflow.com/questions/tagged/uefi) でも、UEFI に関する質問と議論が行われます。これらは非公式なコミュニティですが、迅速な回答が得られることが多いです。
 
 ## ドキュメントとリソース
+
+ファームウェア開発には、膨大なドキュメントとリソースがあります。これらを効果的に活用することで、開発効率が大幅に向上します。ドキュメントは、仕様書、開発ガイド、リファレンスマニュアルの3つのカテゴリに分類できます。
 
 ### 公式ドキュメント
 
@@ -369,19 +466,51 @@ graph TB
     style C fill:#99f,stroke:#333
 ```
 
+**仕様書：**
+
+仕様書は、何を実装すべきかを定義します。UEFI Specification (https://uefi.org/specifications) は、UEFI のすべての側面を詳細に定義しており、2,000 ページを超える包括的な文書です。ACPI Specification (https://uefi.org/specifications) は、ハードウェア構成を OS に伝える方法を規定しており、1,000 ページ以上のボリュームがあります。PI (Platform Initialization) Specification は、PEI フェーズと DXE フェーズの詳細を定義しており、UEFI Specification の補完文書として位置づけられます。
+
+これらの仕様書は、非常に詳細ですが、すべてを読む必要はありません。まず、UEFI Specification の Section 2 (Overview) を読み、全体像を把握します。その後、必要な部分（例: Boot Services、Protocol、Secure Boot など）を深く読みます。仕様書は、リファレンスとして使用し、実装中に疑問が生じたときに参照します。
+
+**開発ガイド：**
+
+開発ガイドは、どのように実装するかを説明します。EDK II Module Writer's Guide (https://tianocore-docs.github.io/edk2-ModuleWriteGuide/) は、EDK II でモジュール（ドライバやアプリケーション）を書く方法を説明しており、初心者にとって最も重要なドキュメントです。EDK II Build Specification (https://tianocore-docs.github.io/edk2-BuildSpecification/) は、ビルドシステムの詳細を説明しており、.inf、.dec、.dsc ファイルの書き方が含まれます。EDK II C Coding Standards Specification (https://tianocore-docs.github.io/edk2-CCodingStandardsSpecification/) は、コーディング規約を定義しており、TianoCore にコードを貢献する際に必須です。
+
+これらのガイドは、実践的な知識を提供します。仕様書が「何を」定義するのに対し、開発ガイドは「どのように」を説明します。EDK II でコードを書く際は、まず Module Writer's Guide を読み、具体的な実装方法を理解します。
+
+**リファレンスマニュアル：**
+
+リファレンスマニュアルは、ハードウェアの詳細を説明します。Intel SDM (Software Developer's Manual) (https://www.intel.com/sdm) は、Intel CPU のすべての命令、レジスタ、動作モードを詳細に定義しており、3,000 ページを超える包括的な文書です。特に Volume 3 (System Programming Guide) は、ファームウェア開発者にとって不可欠であり、メモリ管理、割り込み処理、プロテクトモードといったトピックが含まれます。AMD Programmer's Manual (https://www.amd.com/en/support/tech-docs) は、AMD CPU の同等の情報を提供します。ARM Architecture Reference Manual (https://developer.arm.com/architectures) は、ARM アーキテクチャの詳細を説明しており、ARM ベースのファームウェア開発に必須です。
+
+これらのリファレンスマニュアルは、非常に詳細ですが、低レベルの実装（リセットベクタ、GDT/IDT 設定、ページテーブルなど）を行う際に必要です。仕様書やガイドでは説明されていない、CPU やチップセット固有の動作を理解するために参照します。
+
 ### 推奨される学習リソース
 
-**書籍:**
-- "Beyond BIOS: Developing with the Unified Extensible Firmware Interface" (Intel Press)
-- "Harnessing the UEFI Shell" (Intel Press)
+**書籍：**
 
-**オンラインコース:**
-- Intel の UEFI トレーニング資料
-- coreboot の Documentation
+"Beyond BIOS: Developing with the Unified Extensible Firmware Interface" (Intel Press) は、UEFI 開発の包括的な入門書であり、UEFI の歴史、アーキテクチャ、開発方法を詳しく説明しています。この本は、UEFI の公式解説書として位置づけられており、初心者から中級者まで推奨されます。
 
-**ブログ・記事:**
-- TianoCore ブログ
-- OSDev Wiki
+"Harnessing the UEFI Shell" (Intel Press) は、UEFI Shell の使い方を詳しく説明した書籍です。UEFI Shell は、UEFI アプリケーションのテストとデバッグに非常に有用であり、この本でその活用方法を学べます。
+
+"Low-Level Programming: C, Assembly, and Program Execution on Intel® 64 Architecture" (Apress) は、低レベルプログラミングの基礎を説明しており、アセンブリ言語、メモリ管理、システムコールといったトピックが含まれます。ファームウェア開発に必要な低レベルの知識を習得できます。
+
+**オンラインコース：**
+
+Intel の UEFI トレーニング資料 (https://www.intel.com/content/www/us/en/developer/topic-technology/open/uefi/overview.html) は、無料で公開されており、UEFI の基礎から応用まで幅広くカバーしています。スライド、ビデオ、サンプルコードが含まれており、自習に最適です。
+
+coreboot の Documentation (https://doc.coreboot.org/) は、coreboot の公式ドキュメントであり、ビルド手順、ポーティングガイド、アーキテクチャの詳細が含まれます。coreboot を学びたい場合は、ここから始めるべきです。
+
+Coursera や edX といったオンライン学習プラットフォームでは、"Embedded Systems" や "Operating Systems" といったコースが提供されており、ファームウェア開発の基礎知識を習得できます。
+
+**ブログ・記事：**
+
+TianoCore ブログ (https://www.tianocore.org/blog/) では、EDK II の最新情報、技術記事、チュートリアルが公開されています。新機能やベストプラクティスを学ぶのに有用です。
+
+OSDev Wiki (https://wiki.osdev.org/) は、コミュニティによって維持されているWikiであり、BIOS、UEFI、ブートローダ、メモリマップといったトピックの詳細な説明があります。実装例やコードスニペットも豊富です。
+
+Phrack Magazine (http://phrack.org/) や PoC||GTFO (https://www.alchemistowl.org/pocorgtfo/) といったハッカーズマガジンには、ファームウェアセキュリティに関する高度な技術記事が含まれています。セキュリティ面での深い知識を得たい場合に推奨されます。
+
+個人ブログでは、Alex Ionescu (https://www.alex-ionescu.com/)、Matthew Garrett (https://mjg59.dreamwidth.org/)、Ronald Minnich (coreboot 開発者) といった著名なファームウェアエンジニアのブログが有用です。最新の技術動向や実装の詳細を学べます。
 
 ## エコシステムの関係図
 
