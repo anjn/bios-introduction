@@ -424,6 +424,27 @@ DebugPrint (
 
 ---
 
+## 💡 コラム: GDB で UEFI をデバッグする - 実践的な落とし穴と回避策
+
+🛠️ **開発ツールTips**
+
+QEMU + GDB による UEFI デバッグは強力ですが、アプリケーション開発の常識が通用しない場面が多々あります。最大の落とし穴は**シンボルのロードアドレス**です。UEFI ドライバは、DXE フェーズで動的にメモリに配置されるため、ビルド時のアドレスと実行時のアドレスが異なります。例えば、`DxeCore.dll` をビルドすると `0x0` ベースで生成されますが、実際には `0x7F800000` 番地にロードされることがあります。このため、単純に `symbol-file DxeCore.dll` とするだけでは、ブレークポイントが正しく設定されません。
+
+解決策は、**実行時のベースアドレスを調べて手動でオフセットを指定する**ことです。UEFI のシリアル出力には、各ドライバのロード情報（`Loading driver ... at 0xXXXXXXXX`）が表示されます。この情報を使い、GDB で `add-symbol-file DxeCore.dll 0x7F800000` のようにベースアドレスを指定します。この作業を自動化するため、EDK II には `scripts/` ディレクトリに GDB スクリプトが用意されており、HOB（Hand-Off Block）から動的にアドレスを抽出してシンボルをロードするツールも存在します。
+
+PEI フェーズのデバッグはさらに困難です。PEI は DRAM 初期化前の**キャッシュメモリ上（Cache as RAM, CAR）** で実行されるため、GDB がメモリ内容を正しく読み取れないことがあります。また、PEI ドライバは XIP（eXecute In Place）でフラッシュメモリから直接実行されるため、アドレスが `0xFFxxxxxx` のような高位アドレスになり、GDB の仮想アドレス解決が失敗することがあります。この場合は、**ハードウェアブレークポイント**（`hbreak` コマンド）を使うか、QEMU の内部トレース機能（`-d exec,cpu`）でアセンブリレベルの実行を追跡する必要があります。
+
+最適化ビルド（`RELEASE` ビルド）では、コンパイラの最適化によって変数がレジスタに割り当てられたり、関数がインライン展開されたりするため、GDB で `print` しても「optimized out」と表示されることがあります。この問題を回避するには、デバッグしたい関数だけ `DEBUG` ビルドにするか、`.inf` ファイルで `GCC:*_*_*_CC_FLAGS = -O0 -g` のように最適化を無効化する必要があります。しかし、最適化を無効化するとタイミングが変わり、Heisenbug（デバッグすると消えるバグ）が発生するリスクもあるため、注意が必要です。
+
+実践的なデバッグシナリオとして、筆者が経験した例を紹介します。ある日、UEFI Shell が起動しない問題に遭遇しました。シリアル出力には `DxeCore: Loading Shell.efi...` の後、何も表示されずハングしました。GDB で `DxeLoadImage` にブレークポイントを設定し、シェルのロード処理をステップ実行したところ、PE/COFF ヘッダの `SectionAlignment` が `0x1000` なのに、実際のメモリ配置が 4KB アラインされておらず、メモリアクセス違反が発生していることが判明しました。原因は、メモリアロケータの実装ミスでした。このように、GDB を駆使すれば、シリアル出力だけでは特定できない複雑な問題も解決できます。
+
+📚 **参考資料**
+- [EDK II Debugging - TianoCore Wiki](https://github.com/tianocore/tianocore.github.io/wiki/Debugging)
+- [UEFI Debug with GDB - OSDev Wiki](https://wiki.osdev.org/Debugging_UEFI_applications_with_GDB)
+- [QEMU GDB Documentation](https://qemu.readthedocs.io/en/latest/system/gdb.html)
+
+---
+
 ## POST コードによるデバッグ
 
 ### POST コードとは

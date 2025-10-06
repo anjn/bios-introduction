@@ -93,6 +93,32 @@ graph TD
 - 小さいフットプリント
 - Verified Boot（Google Chromebook）
 
+---
+
+## 💡 コラム: coreboot プロジェクトの20年 - オープンソースファームウェアの挑戦
+
+👥 **コミュニティの話**
+
+coreboot プロジェクトの歴史は、**オープンソースファームウェアの可能性と限界**を示す壮大な物語です。1999年、ロスアラモス国立研究所の研究者たちが、スーパーコンピュータのクラスタを高速起動させるため、「LinuxBIOS」という実験的なプロジェクトを開始しました。当時の BIOS は起動に数分かかることもあり、1000台規模のクラスタでは致命的なボトルネックでした。LinuxBIOS の目標は明確でした：**必要最小限のハードウェア初期化だけを行い、すぐに Linux カーネルを起動する**。この思想は、現在の coreboot にも受け継がれています。
+
+2000年代初頭、LinuxBIOS は AMD の支援を受けて発展しました。AMD は、Opteron プロセッサ向けの初期化コードを LinuxBIOS に提供し、オープンソースコミュニティとの協力関係を築きました。しかし、Intel は当初、オープンソースファームウェアに懐疑的であり、初期化コードの公開を拒否しました。この状況は、2008年にプロジェクト名が「coreboot」に変更され、目標が「Linux 専用ブートローダ」から「汎用的なオープンソースファームウェアフレームワーク」へと拡大した後も続きました。
+
+**転機は2011年、Google が Chromebook に coreboot を採用したこと**でした。Google は、セキュリティと高速起動を重視し、coreboot に **Verified Boot** という独自の署名検証機構を実装しました。Chromebook は世界で数千万台が出荷され、coreboot は一躍「実用的なオープンソースファームウェア」として認知されました。この成功を受けて、Intel も態度を軟化させ、Firmware Support Package（FSP）という形で初期化コードを提供し始めました。現在、coreboot は Google、Facebook（現 Meta）、System76 といった企業から支援を受け、活発に開発が続いています。
+
+coreboot の**技術的な特徴**は、そのモジュール設計にあります。coreboot 本体は、CPU とチップセットの初期化、DRAM の設定、キャッシュ設定など、**プラットフォーム固有の最小限の処理**だけを行います。その後、**Payload** と呼ばれるモジュールに制御を移譲し、Payload が OS ブートや UEFI 互換性を提供します。代表的な Payload には、SeaBIOS（レガシー BIOS 互換）、TianoCore（UEFI 互換）、GRUB2（直接ブート）、depthcharge（Chromebook 専用）があります。この設計により、coreboot は柔軟性と小さいフットプリント（64-256 KB）を両立しています。
+
+しかし、coreboot には**普及の壁**も存在します。最大の課題は、**ハードウェアサポートの限定性**です。coreboot は、各マザーボードごとに専用の初期化コードが必要であり、コミュニティがサポートしているボードは限られています。Chromebook や一部のサーバマザーボード（Supermicro の一部モデルなど）では採用されていますが、一般的なコンシューマー向け PC ではほとんど見られません。また、Windows のサポートには UEFI Payload が必要であり、Secure Boot の実装も複雑です。これらの理由から、coreboot は「オープンソースを重視するニッチな市場」に留まっています。
+
+それでも、coreboot の**哲学的な影響**は計り知れません。「ファームウェアはブラックボックスであってはならない」「ユーザーは自分のハードウェアを完全に制御すべきだ」という主張は、セキュリティ研究者やプライバシー擁護者から強く支持されています。また、coreboot の成功は、Intel に FSP の公開を促し、Slim Bootloader という新たなオープンソースプロジェクトを生み出しました。coreboot は、20年間の挑戦を通じて、ファームウェアエコシステムに「透明性と選択肢」をもたらし続けています。
+
+📚 **参考資料**
+- [coreboot Official Website](https://www.coreboot.org/)
+- [coreboot Documentation](https://doc.coreboot.org/)
+- [LinuxBIOS: A Modern, Open-Source x86 Firmware (2003 Paper)](https://www.coreboot.org/images/6/6c/LCA-2003-linuxbios.pdf)
+- [Google Chromebook Verified Boot](https://www.chromium.org/chromium-os/chromiumos-design-docs/verified-boot/)
+
+---
+
 ### 3. レガシーBIOS
 
 **概要**: 1980年代から続く伝統的なファームウェア

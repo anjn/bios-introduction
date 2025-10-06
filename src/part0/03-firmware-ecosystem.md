@@ -207,6 +207,49 @@ graph LR
 - セキュリティ重視
 - Measured Boot
 
+---
+
+## 💡 コラム: 3大BIOSベンダー - AMI vs Insyde vs Phoenix
+
+🏢 **ベンダー固有の話**
+
+PC を起動して表示される BIOS 設定画面には、「American Megatrends」「Insyde H2O」「Phoenix SecureCore」といったロゴが表示されます。これらは、世界の PC ファームウェア市場を支配する3大 BIOS ベンダーです。Dell、HP、Lenovo、ASUS、MSI といった OEM メーカーは、自社でファームウェアを一から開発するのではなく、これらのベンダーから BIOS を購入し、自社のハードウェアに合わせてカスタマイズします。この章で学んだ EDK II は、まさにこれらのベンダーが実際に使用している開発フレームワークです。それでは、3大ベンダーはどのように異なるのでしょうか。
+
+**AMI (American Megatrends Inc.)** は、1985年に設立された最大手の BIOS ベンダーであり、世界市場シェアの約 40-50% を占めています。AMI の BIOS は「Aptio」というブランド名で提供されており、特にデスクトップ PC とマザーボード市場で圧倒的なシェアを持っています。ASUS、Gigabyte、MSI といった DIY 向けマザーボードメーカーのほとんどが AMI BIOS を採用しています。AMI の強みは、高い互換性と安定性です。膨大な数のハードウェア構成をテストし、あらゆる周辺機器との互換性を保証しています。また、豊富な設定項目を提供し、オーバークロックやファン制御といった高度なカスタマイズが可能です。技術的には、AMI は EDK II をベースに独自の拡張を加えた「Aptio V」という最新バージョンを提供しており、UEFI Specification への完全準拠を謳っています。
+
+**Insyde Software** は、1998年に台湾で設立された、モバイルと組込み市場に強いベンダーです。世界市場シェアは約 30-35% であり、特にノート PC とウルトラブック市場で高いシェアを持っています。Dell XPS、HP Spectre、Lenovo ThinkPad といったプレミアムノート PC の多くが Insyde BIOS を採用しています。Insyde の BIOS は「H2O (Hardware-2-Operating System)」というブランド名であり、軽量で高速起動に最適化されていることが特徴です。モバイル機器では、起動時間とバッテリー寿命が重要な指標であり、Insyde はこれらを最適化するための独自技術を持っています。また、Insyde は Intel の参照デザイン（Reference Design）に準拠したファームウェアを提供することで、OEM メーカーが短期間で製品化できるよう支援しています。
+
+**Phoenix Technologies** は、1979年に設立された最も歴史のある BIOS ベンダーであり、IBM 互換機革命の立役者です。前章のコラムで触れた「クリーンルーム実装」を行ったのが、まさに Phoenix です。現在の市場シェアは約 15-20% であり、主にサーバとエンタープライズ市場に特化しています。HP ProLiant サーバや Dell PowerEdge サーバの一部が Phoenix BIOS（SecureCore）を採用しています。Phoenix の強みは、セキュリティとエンタープライズ機能です。TPM 2.0、Secure Boot、Intel Boot Guard といった高度なセキュリティ機能を早期にサポートし、金融機関や政府機関といったセキュリティ重視の顧客に選ばれています。また、IPMI（Intelligent Platform Management Interface）や BMC（Baseboard Management Controller）といったサーバ管理機能の実装において、豊富な経験を持っています。
+
+3社の技術的な違いは、実装の詳細とカスタマイズの方針にあります。AMI は、幅広いハードウェアサポートと豊富な設定項目を提供し、DIY ユーザーやオーバークロッカーに人気があります。BIOS 設定画面は詳細で、CPU 電圧やメモリタイミングといった低レベルの設定まで可能です。Insyde は、シンプルで洗練された UI と高速起動を重視し、一般消費者向けノート PC に最適化されています。BIOS 設定項目は最小限に絞られ、わかりやすいグラフィカル UI を提供します。Phoenix は、堅牢性とセキュリティを最優先し、エンタープライズ環境での長期運用を想定した設計を採用しています。ログ機能が充実しており、障害診断や監査が容易です。
+
+すべてのベンダーは、EDK II を基盤として使用しています。しかし、EDK II はあくまで「参照実装」であり、実際の製品では各ベンダーが独自の拡張とカスタマイズを加えています。例えば、AMI は独自のユーザーインターフェース（Setup Browser）を実装し、Insyde は独自の電源管理（Power Management）を最適化し、Phoenix は独自のセキュリティモジュール（TrustCore）を統合しています。また、各ベンダーは Intel FSP（Firmware Support Package）や AMD AGESA を統合し、プラットフォーム固有の初期化を実装しています。この統合作業には、高度な技術力と膨大なテストが必要であり、これこそが BIOS ベンダーの付加価値です。
+
+興味深いのは、近年のオープンソース化の動きです。Google Chromebook は coreboot を採用し、AMI や Insyde といった従来のベンダーを使用していません。これは、Chromebook が特定の OS（Chrome OS）のみをサポートすれば良く、汎用的な BIOS の豊富な機能が不要だからです。また、System76 や Purism といった一部の PC メーカーも、coreboot を採用したオープンソース BIOS を提供しています。しかし、大多数の OEM メーカーは、依然として AMI、Insyde、Phoenix といった商用 BIOS ベンダーに依存しています。その理由は、Windows の完全サポート、Secure Boot の実装、膨大なハードウェアテスト、そして法的責任の担保です。
+
+ファームウェア開発者にとって、どのベンダーの BIOS を使用するかは、ターゲット市場によって決まります。デスクトップ PC やゲーミング PC を開発するなら AMI、プレミアムノート PC なら Insyde、サーバやワークステーションなら Phoenix が選択肢となります。また、完全にオープンソースで開発したい場合や、特定の OS のみをサポートする場合は、coreboot が選択肢となります。本書では主に EDK II を使用しますが、EDK II は AMI、Insyde、Phoenix すべての基盤となっているため、本書で学ぶ知識はどのベンダーの BIOS にも応用できます。
+
+**参考表: 3大BIOSベンダーの比較**
+
+| 項目 | AMI | Insyde | Phoenix |
+|------|-----|--------|---------|
+| **設立年** | 1985 | 1998 | 1979 |
+| **市場シェア** | 40-50% | 30-35% | 15-20% |
+| **主要市場** | デスクトップ、マザーボード | ノートPC、ウルトラブック | サーバ、エンタープライズ |
+| **ブランド名** | Aptio V | H2O | SecureCore |
+| **強み** | 互換性、豊富な設定 | 軽量、高速起動 | セキュリティ、堅牢性 |
+| **主要顧客** | ASUS、Gigabyte、MSI | Dell、HP、Lenovo | HP ProLiant、Dell PowerEdge |
+| **UI 特性** | 詳細・技術的 | シンプル・グラフィカル | 堅牢・ログ充実 |
+| **EDK II使用** | あり（独自拡張） | あり（独自拡張） | あり（独自拡張） |
+
+**参考資料**:
+- [AMI Aptio](https://www.ami.com/aptio/) - AMI 公式サイト
+- [Insyde H2O UEFI BIOS](https://www.insyde.com/) - Insyde 公式サイト
+- [Phoenix SecureCore](https://www.phoenix.com/) - Phoenix Technologies 公式サイト
+- "The BIOS Companion" (Phil Croucher) - BIOS ベンダーの歴史と技術
+
+---
+
 ## 開発ツールとエミュレータ
 
 ### QEMU/KVM

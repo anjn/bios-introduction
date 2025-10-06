@@ -553,6 +553,30 @@ sbsign --key MOK.priv --cert MOK.der --output vmlinuz-signed vmlinuz
 
 ---
 
+## 💡 コラム: Secure Boot が複雑な理由 - 標準化の舞台裏
+
+📜 **規格の裏話**
+
+UEFI Secure Boot の仕様は、なぜ PK/KEK/db/dbx という4層構造や Shim のような迂回策が必要になるほど複雑になったのでしょうか。その背景には、Microsoft の戦略と Linux コミュニティの反発、そして「全プラットフォームで動く標準」という理想と現実のギャップがありました。
+
+すべては 2011年、Microsoft が Windows 8 のロゴ認定要件として「**Secure Boot の有効化**」を義務付けたことから始まります。これは Windows にとっては正当なセキュリティ強化でしたが、Linux コミュニティは「Microsoft 以外の OS が締め出される」と猛反発しました。特に、ユーザーが自由にカーネルを再コンパイルできる Linux の文化と、Microsoft の署名がなければ起動できない仕組みは相容れないものでした。
+
+この対立を解決するために生まれたのが **Shim ブートローダ**です。Shim は Microsoft が署名した小さな仲介者として、db には入らない Linux ディストリビューションの鍵（MOK）を検証します。一見すると妥協の産物ですが、これにより「Microsoft の信頼を利用しつつ、ユーザーは自分の鍵で自由に署名できる」という両立が実現しました。しかし、この仕組みはブートチェーンに新たな複雑さを加えました。
+
+さらに、dbx（失効リスト）の運用も複雑さを増大させます。BootHole のような脆弱性が発見されると、Microsoft は世界中の何億台もの PC の dbx を更新しなければなりません。しかし、すべてのベンダーが迅速に対応できるわけではなく、古い PC は脆弱なままになります。また、dbx の更新には KEK の署名が必要なため、誰が dbx を更新する権限を持つかという政治的な問題も生じます。
+
+なぜこれほど複雑なのか。それは Secure Boot が「**単一ベンダーの OS を守る**」のではなく、「**多様な OS ベンダー・ハードウェアベンダー・エンドユーザーの利害を調整しながら、全プラットフォームでセキュリティを実現する**」という難題に挑んでいるからです。PK/KEK/db/dbx の4層構造、Shim/MOK の迂回策、dbx の更新メカニズム——これらはすべて、理想と現実の間で妥協を重ねた結果なのです。
+
+現在では、主要なLinuxディストリビューション（Ubuntu、Fedora、Debian など）はすべて Microsoft の署名を持つ Shim を使って Secure Boot に対応しています。複雑さは残りますが、セキュリティとオープン性の両立という目標は、少なくとも実用レベルでは達成されたと言えるでしょう。
+
+📚 **参考資料**
+- [UEFI Secure Boot Specification](https://uefi.org/specifications)
+- [The Shim Bootloader - GitHub](https://github.com/rhboot/shim)
+- [Microsoft: Windows 8 Hardware Certification Requirements (2011)](https://docs.microsoft.com/en-us/previous-versions/windows/hardware/cert-program/)
+- [Matthew Garrett's Blog: Secure Boot](https://mjg59.dreamwidth.org/)
+
+---
+
 ## Secure Boot の設定と管理
 
 ### Secure Boot の有効化/無効化
