@@ -4,15 +4,6 @@ authors = ["Jun Ando", "Sonnet 4.5"]
 multilingual = false
 src = "src"
 
-# Supported languages for translation
-# ja (Japanese) is the source language
-# Target language: en (English)
-[language.ja]
-name = "日本語"
-
-[language.en]
-name = "English"
-
 [build]
 build-dir = "book"
 create-missing = true
@@ -22,8 +13,7 @@ default-theme = "light"
 preferred-dark-theme = "navy"
 git-repository-url = "https://github.com/anjn/bios-introduction"
 edit-url-template = "https://github.com/anjn/bios-introduction/edit/main/{path}"
-additional-js = ["mermaid.min.js", "mermaid-init.js", "language-selector.js"]
-additional-css = ["language-selector.css"]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
 
 [output.html.search]
 enable = true
