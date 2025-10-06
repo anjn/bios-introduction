@@ -511,9 +511,11 @@ CheckAntiRollback (
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: BootHole 脆弱性 (CVE-2020-10713) - Secure Boot をバイパスする深刻な欠陥
 
-🔒 **セキュリティ事例**
+**🔒 セキュリティ事例**
 
 2020年7月、セキュリティ研究者が「BootHole」という深刻な脆弱性を発見しました。この脆弱性は、GRUB2（GRand Unified Bootloader 2）に存在し、Secure Boot を完全にバイパスできる可能性がありました。BootHole は、CVE-2020-10713 として登録され、CVSS スコア 8.2（High）と評価されました。影響範囲は広大で、Linux、Windows、macOS、VMware ESXi など、ほぼすべての UEFI ベースのシステムが影響を受けました。この脆弱性は、本章で学ぶ「信頼チェーンの切断攻撃」の実例であり、なぜ各ブートステージでの署名検証が重要なのかを示しています。
 
@@ -533,11 +535,13 @@ BootHole は、**Secure Boot の限界**も示しています。Secure Boot は�
 
 本章で学ぶ信頼チェーンの概念は、BootHole のような実際の脆弱性を理解する上で不可欠です。各ブートステージ（UEFI Firmware → shim → GRUB2 → Kernel）で署名検証を行い、信頼を伝播させる仕組みは、理論上は完璧です。しかし、実装の詳細（設定ファイルの検証漏れ、バッファオーバーフロー）が、セキュリティの穴を生み出します。ファームウェア開発者は、単に仕様に従うだけでなく、攻撃者の視点でコードをレビューし、「どこに弱点があるか」を常に考える必要があります。
 
-**参考資料**:
+**📚 参考資料**
 - [CVE-2020-10713 - BootHole](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10713) - 公式CVE情報
 - ["BootHole: Bootloader Vulnerabilities Impact Billions of Devices"](https://eclypsium.com/2020/07/29/theres-a-hole-in-the-boot/) - Eclypsium 社のレポート
 - [UEFI DBX Update Guidance](https://uefi.org/revocationlistfile) - UEFI Forum の DBX 更新ガイド
 - [GRUB2 Security Advisory](https://www.gnu.org/software/grub/) - GRUB2 公式サイト
+
+</div>
 
 ---
 

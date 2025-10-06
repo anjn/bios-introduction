@@ -73,9 +73,11 @@ timeline
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: IBM PC BIOSの誕生秘話と互換機革命
 
-🕰️ **歴史的エピソード**
+**🕰️ 歴史的エピソード**
 
 1981年8月12日、IBM は IBM Personal Computer Model 5150（通称 IBM PC）を発表しました。このコンピュータに搭載された BIOS は、わずか 8KB のコードでしたが、後のパーソナルコンピュータ業界全体を形作る基盤となります。IBM PC の開発は、当時としては異例のスピードで進められ、わずか1年で完成しました。IBM は従来の「すべてを自社開発する」方針を転換し、Intel 8088 CPU、Microsoft の DOS など、外部企業の技術を積極的に採用するオープンアーキテクチャ戦略を取りました。しかし、この戦略には大きなリスクがありました。ハードウェア仕様が公開されれば、他社が互換機を作ることが容易になるからです。
 
@@ -91,10 +93,12 @@ BIOS の互換性は、40年以上経った現代でも維持されています�
 
 本章で学ぶ BIOS の「設計上の制約」は、まさにこの1981年の IBM PC BIOS の設計判断に由来しています。16bit リアルモード、1MB メモリ空間、MBR の 512 バイト制限といった制約は、すべて当時のハードウェア環境に最適化された結果です。しかし、これらの制約が40年後まで引き継がれることになるとは、当時の開発者も予想していなかったでしょう。歴史を知ることで、「なぜ現代のファームウェアはこんなに複雑なのか」という疑問が、「互換性を維持するためだったのか」という理解に変わります。
 
-**参考資料**:
+**📚 参考資料**
 - David Bradley, ["The Inventor of Ctrl+Alt+Delete"](https://www.youtube.com/watch?v=K_lg7w8gAXQ) - インタビュー動画
 - "Fire in the Valley" (Paul Freiberger & Michael Swaine) - PC 革命の歴史
 - ["How Compaq Cloned the IBM PC"](https://www.pcworld.com/article/2025446/how-compaq-clone-ibm-pc.html) - PC World 記事
+
+</div>
 
 ---
 

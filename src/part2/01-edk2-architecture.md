@@ -71,9 +71,11 @@ graph LR
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: TianoCore プロジェクトの誕生 - Intel によるオープンソース化の決断
 
-👥 **コミュニティの話**
+**👥 コミュニティの話**
 
 TianoCore プロジェクトの誕生は、2004年の Intel による大胆な決断から始まりました。当時、Intel は社内で「Tiano」というコードネームで呼ばれる次世代ファームウェアを開発していました。Tiano は、Intel EFI 仕様をベースにした完全な実装であり、Itanium プロセッサ向けに設計されていました。この Tiano を、Intel はオープンソース化するという前例のない決断を下したのです。なぜ Intel は、自社の重要な技術資産をオープンソースにしたのでしょうか。
 
@@ -95,11 +97,13 @@ TianoCore コミュニティは、年次イベント「UEFI Plugfest」を開催
 
 本章で学ぶ EDK II の設計思想（モジュール性、移植性、標準準拠）は、TianoCore コミュニティの20年にわたる集合知の結晶です。Intel が2004年にオープンソース化を決断したことで、世界中のエンジニアが協力してファームウェアを改善できるようになりました。本書で EDK II を学ぶということは、この巨大なコミュニティの一員となることを意味します。TianoCore のメーリングリストに質問を投稿すれば、世界中の専門家から回答が得られます。あなたがバグを発見すれば、Pull Request を送ることで、次のバージョンに反映されます。これこそが、オープンソースの力です。
 
-**参考資料**:
+**📚 参考資料**
 - [TianoCore 公式サイト](https://www.tianocore.org/) - プロジェクトの歴史と構造
 - [EDK II GitHub リポジトリ](https://github.com/tianocore/edk2) - 最新のコードベース
 - [TianoCore メーリングリスト](https://edk2.groups.io/g/devel) - 開発者コミュニティ
 - ["Intel's Open Source Firmware Evolution"](https://firmware.intel.com/) - Intel の公式ブログ
+
+</div>
 
 ---
 

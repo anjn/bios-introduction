@@ -209,9 +209,11 @@ graph LR
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: 3大BIOSベンダー - AMI vs Insyde vs Phoenix
 
-🏢 **ベンダー固有の話**
+**🏢 ベンダー固有の話**
 
 PC を起動して表示される BIOS 設定画面には、「American Megatrends」「Insyde H2O」「Phoenix SecureCore」といったロゴが表示されます。これらは、世界の PC ファームウェア市場を支配する3大 BIOS ベンダーです。Dell、HP、Lenovo、ASUS、MSI といった OEM メーカーは、自社でファームウェアを一から開発するのではなく、これらのベンダーから BIOS を購入し、自社のハードウェアに合わせてカスタマイズします。この章で学んだ EDK II は、まさにこれらのベンダーが実際に使用している開発フレームワークです。それでは、3大ベンダーはどのように異なるのでしょうか。
 
@@ -242,11 +244,13 @@ PC を起動して表示される BIOS 設定画面には、「American Megatren
 | **UI 特性** | 詳細・技術的 | シンプル・グラフィカル | 堅牢・ログ充実 |
 | **EDK II使用** | あり（独自拡張） | あり（独自拡張） | あり（独自拡張） |
 
-**参考資料**:
+**📚 参考資料**
 - [AMI Aptio](https://www.ami.com/aptio/) - AMI 公式サイト
 - [Insyde H2O UEFI BIOS](https://www.insyde.com/) - Insyde 公式サイト
 - [Phoenix SecureCore](https://www.phoenix.com/) - Phoenix Technologies 公式サイト
 - "The BIOS Companion" (Phil Croucher) - BIOS ベンダーの歴史と技術
+
+</div>
 
 ---
 

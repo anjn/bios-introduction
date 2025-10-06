@@ -479,9 +479,11 @@ ReportMemoryLeaks (
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: 3日かかったヒープ破壊バグ - デバッグの現実
 
-💼 **実務での事例**
+**💼 実務での事例**
 
 ある日、筆者が開発していた UEFI ドライバが、**10回に1回の確率でハング**するという問題に遭遇しました。再現性が低く、QEMU では発生せず、実機でのみ発生するという最悪のパターンです。シリアル出力には `AllocatePool failed: Out of Resources` という謎のエラーが表示されますが、メモリは十分にあるはずです。この問題の解決に、3日間を費やすことになりました。
 
@@ -495,10 +497,12 @@ ReportMemoryLeaks (
 
 **教訓**: ヒープ破壊バグは、原因と症状が**時間的・空間的に離れている**ため、デバッグが極めて困難です。ガードパターンやアサーションを積極的に活用し、**境界チェック**を徹底することが重要です。また、再現性の低いバグは、メモリレイアウトやタイミングに依存するため、ログだけでなく**メモリダンプ**や**メモリアロケータの内部状態**を詳細に調べる必要があります。そして何より、**ソースコードを読む**ことが、複雑な問題を解決する最も確実な方法です。
 
-📚 **参考資料**
+**📚 参考資料**
 - [EDK II Memory Services - MdeModulePkg/Core/Dxe/Mem/](https://github.com/tianocore/edk2/tree/master/MdeModulePkg/Core/Dxe/Mem)
 - [Debugging Memory Corruption - OSDev Wiki](https://wiki.osdev.org/Detecting_Memory_Corruption)
 - [Valgrind User Manual](https://valgrind.org/docs/manual/manual.html) (Linux アプリケーション用だが概念は同じ)
+
+</div>
 
 ---
 

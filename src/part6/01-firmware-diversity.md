@@ -95,9 +95,11 @@ graph TD
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: coreboot プロジェクトの20年 - オープンソースファームウェアの挑戦
 
-👥 **コミュニティの話**
+**👥 コミュニティの話**
 
 coreboot プロジェクトの歴史は、**オープンソースファームウェアの可能性と限界**を示す壮大な物語です。1999年、ロスアラモス国立研究所の研究者たちが、スーパーコンピュータのクラスタを高速起動させるため、「LinuxBIOS」という実験的なプロジェクトを開始しました。当時の BIOS は起動に数分かかることもあり、1000台規模のクラスタでは致命的なボトルネックでした。LinuxBIOS の目標は明確でした：**必要最小限のハードウェア初期化だけを行い、すぐに Linux カーネルを起動する**。この思想は、現在の coreboot にも受け継がれています。
 
@@ -111,11 +113,13 @@ coreboot の**技術的な特徴**は、そのモジュール設計にありま�
 
 それでも、coreboot の**哲学的な影響**は計り知れません。「ファームウェアはブラックボックスであってはならない」「ユーザーは自分のハードウェアを完全に制御すべきだ」という主張は、セキュリティ研究者やプライバシー擁護者から強く支持されています。また、coreboot の成功は、Intel に FSP の公開を促し、Slim Bootloader という新たなオープンソースプロジェクトを生み出しました。coreboot は、20年間の挑戦を通じて、ファームウェアエコシステムに「透明性と選択肢」をもたらし続けています。
 
-📚 **参考資料**
+**📚 参考資料**
 - [coreboot Official Website](https://www.coreboot.org/)
 - [coreboot Documentation](https://doc.coreboot.org/)
 - [LinuxBIOS: A Modern, Open-Source x86 Firmware (2003 Paper)](https://www.coreboot.org/images/6/6c/LCA-2003-linuxbios.pdf)
 - [Google Chromebook Verified Boot](https://www.chromium.org/chromium-os/chromiumos-design-docs/verified-boot/)
+
+</div>
 
 ---
 

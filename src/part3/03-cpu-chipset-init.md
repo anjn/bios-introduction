@@ -125,9 +125,11 @@ UINT64 MicrocodeVersion = AsmReadMsr64 (0x8B);
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: マイクロコードと CPU 初期化の仕組み
 
-🔬 **技術的深堀り**
+**🔬 技術的深堀り**
 
 なぜ x86 CPU はマイクロコードという仕組みを持つのでしょうか。その答えは、x86 が CISC（Complex Instruction Set Computing）アーキテクチャとして設計されたことに由来します。CISC は、1つの命令で複雑な操作を実行できるように設計されており、例えば `REP MOVSB` という命令は、文字列全体をメモリ間でコピーする複雑な処理を単一命令で実現します。しかし、このような複雑な命令をハードウェアで直接実装すると、回路が非常に複雑になり、高速化が困難になります。そこで、Intel は、複雑な CISC 命令を内部的に単純な RISC 風のマイクロオペレーション（μops、マイクロオプス）に変換し、パイプラインで並列実行する方式を採用しました。この変換を行うのがマイクロコードです。
 
@@ -143,11 +145,13 @@ CPU 初期化を理解するには、いくつかの重要な予備知識が必�
 
 本章で学ぶマイクロコード更新、キャッシュ設定（MTRR）、BSP/AP 起動、MSR 設定といった CPU 初期化のステップは、すべてこれらの基礎知識の上に成り立っています。マイクロコードが CISC 命令を μops に変換する仕組みを理解することで、なぜマイクロコード更新が重要なのかが明確になります。MSR、CPUID、MTRR、CAR といった概念を理解することで、CPU 初期化コードの各ステップの意味が理解できるようになります。そして、Spectre/Meltdown のようなセキュリティ脆弱性を知ることで、ファームウェアが最新のマイクロコードを適用する責任の重さを実感できるでしょう。CPU 初期化は、単なる設定作業ではなく、システム全体のパフォーマンスとセキュリティを左右する重要なプロセスなのです。
 
-**参考資料**:
+**📚 参考資料**
 - [Intel® 64 and IA-32 Architectures Software Developer's Manual, Volume 3](https://www.intel.com/sdm) - Chapter 9: Processor Management and Initialization
 - [Intel Microcode Update Guidance](https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/resources/microcode-update-guidance.html)
 - ["Meltdown and Spectre" (meltdownattack.com)](https://meltdownattack.com/) - CPU 脆弱性の詳細
 - Jon Stokes, "Inside the Machine" - CISC と RISC、マイクロアーキテクチャの解説
+
+</div>
 
 ---
 

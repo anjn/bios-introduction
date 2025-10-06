@@ -76,9 +76,11 @@ graph TB
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: なぜリセットベクタは 0xFFFFFFF0 なのか - 40年続く設計判断
 
-🕰️ **歴史的エピソード**
+**🕰️ 歴史的エピソード**
 
 x86 CPU がリセット後に 0xFFFFFFF0 番地から実行を開始するという設計は、1978年の Intel 8086 に由来する歴史的な決定です。しかし、8086 は 16bit CPU であり、アドレス空間は 1MB (0x00000 - 0xFFFFF) しかありませんでした。なぜ当時は 0xFFFF0 だったリセットベクタが、現代の 64bit CPU でも 0xFFFFFFF0 として維持されているのでしょうか。その答えは、x86 アーキテクチャの「互換性への執念」にあります。
 
@@ -98,11 +100,13 @@ x86 の「0xFFFFFFF0 固定」という設計は、柔軟性に欠けると批�
 
 本章で学ぶ「なぜ 0xFFFFFFF0 なのか」という疑問は、単なる技術的な仕様ではなく、x86 アーキテクチャの歴史と互換性への執念を物語っています。8086 の 1MB 制約から始まり、80286 の 16MB、80386 の 4GB、そして x86_64 の 64bit 空間へと拡張されながらも、リセットベクタの位置は一貫して「最上位から 16 バイト下」に保たれています。この一貫性こそが、40年以上にわたって x86 が市場を支配し続けた理由の一つです。
 
-**参考資料**:
+**📚 参考資料**
 - Intel 8086 User's Manual (1978) - 初代 x86 の仕様書
 - Intel® 64 and IA-32 Architectures Software Developer's Manual, Volume 3 - Chapter 9: Processor Management and Initialization
 - ["The Evolution of x86 Reset Vector"](https://wiki.osdev.org/Reset_Vector) - OSDev Wiki
 - ARM Architecture Reference Manual - Exception Handling
+
+</div>
 
 ---
 

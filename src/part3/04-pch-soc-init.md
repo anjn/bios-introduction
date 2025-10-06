@@ -599,9 +599,11 @@ InitializeFch (
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: AMD AGESA: Intel FSP に対抗するプラットフォーム初期化フレームワーク
 
-🏢 **ベンダー固有の話**
+**🏢 ベンダー固有の話**
 
 AMD AGESA（AMD Generic Encapsulated Software Architecture）は、Intel FSP と同様に、プラットフォーム初期化の複雑さを BIOS ベンダーから隠蔽するためのフレームワークです。本章で学んだ Intel FSP が PCH の初期化を担当するように、AGESA は AMD プラットフォームの FCH（Fusion Controller Hub）、メモリ、CPU、そして Infinity Fabric の初期化を担当します。AGESA の最大の目的は、チップセット設計の詳細を抽象化し、BIOS ベンダー（AMI、Phoenix、Insyde など）が容易にプラットフォームをサポートできるようにすることです。これにより、AMD は新しいプロセッサやチップセットを市場に投入する際、BIOS ベンダーが迅速に対応でき、エコシステム全体の開発効率が向上します。
 
@@ -629,11 +631,13 @@ AMD Ryzen および EPYC 世代では、**AGESA v5（Combo PI）** が導入さ�
 | **更新頻度** | BIOS 更新 | BIOS 更新（頻繁） |
 | **オープンソース度** | なし | 一部公開 |
 
-**参考資料**:
+**📚 参考資料**
 - [coreboot AGESA Integration](https://doc.coreboot.org/vendorcode/amd/agesa/index.html)
 - [UEFI PI (Platform Initialization) Specification](https://uefi.org/specifications)
 - AMD Ryzen AGESA Release Notes（マザーボードベンダーのBIOS更新ページ）
 - "AMD AGESA and coreboot" - Open Source Firmware Conference talks
+
+</div>
 
 ---
 

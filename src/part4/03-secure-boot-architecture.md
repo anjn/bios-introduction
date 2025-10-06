@@ -553,9 +553,11 @@ sbsign --key MOK.priv --cert MOK.der --output vmlinuz-signed vmlinuz
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: Secure Boot が複雑な理由 - 標準化の舞台裏
 
-📜 **規格の裏話**
+**📜 規格の裏話**
 
 UEFI Secure Boot の仕様は、なぜ PK/KEK/db/dbx という4層構造や Shim のような迂回策が必要になるほど複雑になったのでしょうか。その背景には、Microsoft の戦略と Linux コミュニティの反発、そして「全プラットフォームで動く標準」という理想と現実のギャップがありました。
 
@@ -569,11 +571,13 @@ UEFI Secure Boot の仕様は、なぜ PK/KEK/db/dbx という4層構造や Shim
 
 現在では、主要なLinuxディストリビューション（Ubuntu、Fedora、Debian など）はすべて Microsoft の署名を持つ Shim を使って Secure Boot に対応しています。複雑さは残りますが、セキュリティとオープン性の両立という目標は、少なくとも実用レベルでは達成されたと言えるでしょう。
 
-📚 **参考資料**
+**📚 参考資料**
 - [UEFI Secure Boot Specification](https://uefi.org/specifications)
 - [The Shim Bootloader - GitHub](https://github.com/rhboot/shim)
 - [Microsoft: Windows 8 Hardware Certification Requirements (2011)](https://docs.microsoft.com/en-us/previous-versions/windows/hardware/cert-program/)
 - [Matthew Garrett's Blog: Secure Boot](https://mjg59.dreamwidth.org/)
+
+</div>
 
 ---
 

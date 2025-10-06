@@ -92,9 +92,11 @@ BIOS → MBR読み込み (0x7C00) → MBRコード実行 → OSローダ
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: MBR の 512 バイト制限 - 40年続く設計上の制約と創意工夫
 
-🕰️ **歴史的エピソード**
+**🕰️ 歴史的エピソード**
 
 MBR（Master Boot Record）が **512 バイト**という厳しいサイズ制限を持つ理由は、1981 年の IBM PC 設計にまで遡ります。IBM PC の標準ストレージデバイスは 5.25 インチフロッピーディスクであり、そのセクタサイズが **512 バイト**でした。BIOS 設計者は、「ディスクの最初のセクタをメモリにロードして実行する」という最もシンプルな方法を採用しました。この決定は、当時のメモリ（数十 KB）と ROM（数 KB）が極めて限られていたため、合理的でした。しかし、この 512 バイトという制約は、その後 40 年以上にわたってブートローダ開発者を悩ませ続けることになります。
 
@@ -108,10 +110,12 @@ GRUB（GRand Unified Bootloader）の MBR コードは、まさにこの制約�
 
 512 バイトという小さな制約が、40 年間にわたってブートローダの設計と実装に影響を与え続けてきたという事実は、**初期の設計判断の重要性**を物語っています。一度標準化された仕様は、たとえ時代遅れになっても、互換性のために長く生き続けます。UEFI は、この歴史的制約から解放され、新しい可能性を開きました。しかし、MBR ブートを学ぶことで、限られたリソースの中で創意工夫を凝らす技術者の姿勢と、互換性維持の重要性を理解できるのです。
 
-📚 **参考資料**
+**📚 参考資料**
 - [Master Boot Record - OSDev Wiki](https://wiki.osdev.org/MBR_(x86))
 - [GRUB Boot Process](https://www.gnu.org/software/grub/manual/grub/html_node/Images.html)
 - [IBM PC Technical Reference Manual (1981)](https://archive.org/details/IBM_5150_Technical_Reference_6025005_APR84)
+
+</div>
 
 ---
 

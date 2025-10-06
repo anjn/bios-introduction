@@ -424,9 +424,11 @@ DebugPrint (
 
 ---
 
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
 ## 💡 コラム: GDB で UEFI をデバッグする - 実践的な落とし穴と回避策
 
-🛠️ **開発ツールTips**
+**🛠️ 開発ツールTips**
 
 QEMU + GDB による UEFI デバッグは強力ですが、アプリケーション開発の常識が通用しない場面が多々あります。最大の落とし穴は**シンボルのロードアドレス**です。UEFI ドライバは、DXE フェーズで動的にメモリに配置されるため、ビルド時のアドレスと実行時のアドレスが異なります。例えば、`DxeCore.dll` をビルドすると `0x0` ベースで生成されますが、実際には `0x7F800000` 番地にロードされることがあります。このため、単純に `symbol-file DxeCore.dll` とするだけでは、ブレークポイントが正しく設定されません。
 
@@ -438,10 +440,12 @@ PEI フェーズのデバッグはさらに困難です。PEI は DRAM 初期化
 
 実践的なデバッグシナリオとして、筆者が経験した例を紹介します。ある日、UEFI Shell が起動しない問題に遭遇しました。シリアル出力には `DxeCore: Loading Shell.efi...` の後、何も表示されずハングしました。GDB で `DxeLoadImage` にブレークポイントを設定し、シェルのロード処理をステップ実行したところ、PE/COFF ヘッダの `SectionAlignment` が `0x1000` なのに、実際のメモリ配置が 4KB アラインされておらず、メモリアクセス違反が発生していることが判明しました。原因は、メモリアロケータの実装ミスでした。このように、GDB を駆使すれば、シリアル出力だけでは特定できない複雑な問題も解決できます。
 
-📚 **参考資料**
+**📚 参考資料**
 - [EDK II Debugging - TianoCore Wiki](https://github.com/tianocore/tianocore.github.io/wiki/Debugging)
 - [UEFI Debug with GDB - OSDev Wiki](https://wiki.osdev.org/Debugging_UEFI_applications_with_GDB)
 - [QEMU GDB Documentation](https://qemu.readthedocs.io/en/latest/system/gdb.html)
+
+</div>
 
 ---
 
