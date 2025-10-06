@@ -17,7 +17,17 @@
 
 ### 役割の分離
 
-多くの人が混同しがちですが、**Boot Manager** と **Boot Loader** は異なる役割を持ちます。
+コンピュータの起動プロセスについて学ぶとき、**Boot Manager** と **Boot Loader** という用語が頻繁に登場します。多くの人がこれらを混同しがちですが、実際には異なる役割を持つ別々のコンポーネントです。この違いを正しく理解することは、UEFI ブートプロセスの全体像を把握するために不可欠です。
+
+**Boot Manager** は、UEFI ファームウェアの一部として実装されており、ファームウェアの ROM に組み込まれています。Boot Manager の主な役割は、ブートオプションの管理と選択です。具体的には、UEFI 変数に保存された複数のブートオプションを読み込み、優先順位に従ってどのブートターゲットを起動するかを決定します。Boot Manager は、ユーザーにブートメニューを表示してブートターゲットを選択させることもできますし、タイムアウト後に自動的にデフォルトのブートオプションを選択することもできます。Boot Manager の最終的な仕事は、選択されたブートオプションに対応する EFI アプリケーションをメモリにロードし、実行を開始することです。
+
+一方、**Boot Loader** は、ESP (EFI System Partition) 上に保存された UEFI アプリケーションです。Boot Loader は、ファームウェアの外部に存在し、独立したファイルとして配布されます。Linux の GRUB、systemd-boot、Windows の Windows Boot Manager などが、Boot Loader の代表例です。Boot Loader の主な役割は、オペレーティングシステムのカーネルをメモリにロードし、起動パラメータを設定し、カーネルに制御を渡すことです。Boot Loader は、ファイルシステムを理解し、カーネルイメージや initrd (初期 RAM ディスク) を読み込む能力を持っています。また、Boot Loader は、複数のカーネルバージョンや起動オプションを管理し、ユーザーに選択肢を提供することもあります。
+
+**重要なポイント**は、Boot Loader も UEFI アプリケーションであり、Boot Manager によってロードされるということです。つまり、Boot Manager が最初に起動し、その後 Boot Manager が Boot Loader を見つけてロードし、最後に Boot Loader がカーネルをロードします。この二段階のプロセスにより、ファームウェアと OS の間に明確な分離が生まれ、異なる OS を同じファームウェア上で起動できるようになります。
+
+この役割の分離には、いくつかの利点があります。まず、**柔軟性**です。ファームウェアは、どのような Boot Loader がインストールされているかを知る必要がなく、標準的なインターフェース (UEFI アプリケーション) を通じてロードするだけです。次に、**独立性**です。Boot Loader は、ファームウェアの実装に依存せず、独自の更新サイクルで開発できます。さらに、**マルチブート**のサポートです。複数の Boot Loader を ESP にインストールし、Boot Manager がそれらを管理することで、複数の OS を同じマシンで起動できます。
+
+**補足図: Boot Manager と Boot Loader の関係**
 
 ```mermaid
 graph TB
@@ -51,14 +61,12 @@ graph TB
     style WINBOOT fill:#fff4e1
 ```
 
-### 定義と責務
+**参考表: Boot Manager と Boot Loader の定義**
 
 | コンポーネント | 実装場所 | 責務 | 例 |
 |--------------|---------|------|-----|
 | **Boot Manager** | UEFI Firmware 内蔵 | ブートオプション管理、選択、EFI アプリケーションのロード | UEFI Boot Manager |
 | **Boot Loader** | ESP 上の EFI アプリ | カーネルのロード、起動パラメータ設定 | GRUB、systemd-boot、Windows Boot Manager |
-
-**重要なポイント**: Boot Loader も UEFI アプリケーションであり、Boot Manager によってロードされます。
 
 ---
 
@@ -414,37 +422,19 @@ sequenceDiagram
 
 ## まとめ
 
-### この章で学んだこと
+この章では、UEFI ブートプロセスにおける Boot Manager と Boot Loader の役割、そしてブートオプション管理の仕組みを詳しく学びました。**Boot Manager** と **Boot Loader** は、名前が似ているため混同されがちですが、明確に異なる役割を持っています。Boot Manager は UEFI ファームウェアに内蔵されており、ブートオプションの管理、選択、そして EFI アプリケーションのロードを担当します。一方、Boot Loader は ESP 上の UEFI アプリケーションであり、カーネルのロードと起動パラメータの設定を担当します。重要なのは、Boot Loader も UEFI アプリケーションであり、Boot Manager によってロードされるという点です。この二段階のプロセスにより、ファームウェアと OS の間に明確な分離が生まれ、柔軟なマルチブート環境を実現します。
 
-✅ **Boot Manager と Boot Loader の違い**
-- Boot Manager: UEFI Firmware 内蔵、ブートオプション管理
-- Boot Loader: ESP 上の EFI アプリ、カーネルをロード
+ブートオプションは、**Boot#### UEFI 変数**によって管理されます。**BootOrder** 変数は、ブートオプションの優先順位を定義する UINT16 配列であり、Boot Manager はこの順序に従ってブートを試みます。個々のブートオプションは、**Boot0000**、**Boot0001** といった変数に保存され、それぞれが **EFI_LOAD_OPTION** 構造体を含んでいます。EFI_LOAD_OPTION 構造体は、Attributes (有効/無効、表示/非表示などのフラグ)、Description (ブートオプションの説明文字列)、FilePathList (ブートターゲットへのデバイスパス)、OptionalData (ブートローダに渡す追加パラメータ) を含みます。これらの変数は、不揮発性ストレージ (通常は SPI フラッシュ) に保存され、再起動後も保持されます。
 
-✅ **Boot#### UEFI 変数**
-- BootOrder: ブート優先順位
-- Boot0000, Boot0001, ...: 各ブートオプションの詳細
-- EFI_LOAD_OPTION 構造体
+**デバイスパス**は、ブートターゲットを一意に識別するための重要な仕組みです。デバイスパスは、パーティション情報とファイルパスで構成され、例えば `HD(1,GPT,<GUID>,0x800,0x100000)/\EFI\ubuntu\grubx64.efi` のように表現されます。この例では、HD 部分が GPT パーティション 1 を指定し、その後のファイルパスがパーティション内の EFI アプリケーションの場所を指定しています。リムーバブルメディアの場合、デバイスパスは PciRoot、Pci、USB などのノードを含み、物理的な接続経路全体を表現します。デバイスパスの柔軟性により、Boot Manager は固定ディスク、リムーバブルメディア、ネットワークブートなど、多様なブートソースをサポートできます。
 
-✅ **デバイスパス**
-- ブートターゲットを一意に識別
-- パーティション + ファイルパスで構成
+**BDS (Boot Device Selection) Phase** では、Boot Manager が実際のブート処理を実行します。BDS Phase に入ると、Boot Manager はまず BootOrder 変数を読み込み、優先順位の高いブートオプションから順に試行します。各ブートオプションについて、Boot Manager はデバイスパスを解析し、対応する EFI アプリケーション (Boot Loader) を探索します。ユーザーがブートメニューを開いた場合、Boot Manager はブートオプションのリストを表示し、ユーザーの選択を待ちます。タイムアウト内にユーザー入力がない場合、Boot Manager は自動的にデフォルトのブートオプションを選択します。選択されたブートオプションに対応する EFI アプリケーションが見つかると、Boot Manager は LoadImage() と StartImage() を呼び出し、Boot Loader に制御を渡します。
 
-✅ **BDS Phase の動作**
-- BootOrder に従ってブートオプションを試行
-- タイムアウトまたはユーザー選択でブート
+UEFI 仕様では、**Fallback Boot Path** という仕組みを定義しています。これは、Boot#### 変数が存在しない、または有効なブートオプションが見つからない場合に使用されるデフォルトパスです。x86_64 アーキテクチャでは、`\EFI\BOOT\BOOTX64.EFI` がデフォルトパスとして定義されています。この仕組みにより、USB インストールメディアなどのリムーバブルメディアは、特別な設定なしでブート可能になります。Boot Manager は、Fallback モードに切り替わると、接続されているすべてのストレージデバイスを順に探索し、デフォルトパスに EFI アプリケーションが存在するかを確認します。ファイルが見つかれば、それをロードして実行します。
 
-✅ **Fallback Boot Path**
-- \EFI\BOOT\BOOTX64.EFI がデフォルト
-- リムーバブルメディアで使用
+**Boot Loader** には、複数の種類があります。**GRUB (GRand Unified Bootloader)** は、Linux で最も一般的なブートローダであり、汎用性が高く、多機能です。GRUB は、grub.cfg 設定ファイルを読み込み、複数のカーネルバージョンや起動オプションを管理します。Secure Boot 環境では、shimx64.efi が中間ローダーとして機能し、GRUB をロードする前に署名検証を実行します。**systemd-boot** は、シンプルで高速なブートローダであり、UEFI のみをサポートします (BIOS 非対応)。systemd-boot の設定ファイルは非常にシンプルで、理解しやすいのが特徴です。**Windows Boot Manager** は、Windows 専用のブートローダであり、BCD (Boot Configuration Data) を読み込んで Windows カーネルを起動します。
 
-✅ **Boot Loader の種類**
-- GRUB: 汎用、高機能
-- systemd-boot: シンプル、高速
-- Windows Boot Manager: Windows 専用
-
-✅ **Secure Boot**
-- 署名検証により信頼できるコードのみ実行
-- shim が中間ローダーとして機能
+**Secure Boot** が有効な場合、Boot Manager は署名されていない EFI アプリケーションの実行を拒否します。Boot Manager は、LoadImage() 時に、Signature Database (db 変数) を参照して EFI アプリケーションの署名を検証します。署名が信頼できる証明書でなされている場合のみ、アプリケーションの実行が許可されます。Linux の場合、shim が重要な役割を果たします。shim は Microsoft によって署名された中間ローダーであり、ディストリビューション固有の証明書で GRUB を検証します。この二段階の検証により、Linux ディストリビューションは Secure Boot 環境でも正しく起動できます。
 
 ### 次章の予告
 

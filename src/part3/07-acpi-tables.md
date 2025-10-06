@@ -15,9 +15,21 @@
 
 ---
 
+## ACPI テーブルの全体像
+
+前章で学んだように、ACPI アーキテクチャは複数のテーブルから構成され、それぞれが特定のハードウェア情報やデバイス設定を OS に提供します。RSDP（Root System Description Pointer）から始まる階層的な構造により、OS は XSDT（Extended System Description Table）を経由して、さまざまな ACPI テーブルを発見し、解析します。この章では、**FADT（Fixed ACPI Description Table）**、**MADT（Multiple APIC Description Table）**、**MCFG（Memory Mapped Configuration Table）**、**HPET（High Precision Event Timer Table）**、**SRAT（System Resource Affinity Table）**、**SLIT（System Locality Information Table）**、**BGRT（Boot Graphics Resource Table）** といった主要なテーブルの詳細構造と役割を学びます。
+
+これらのテーブルは、それぞれ異なる目的を持っています。まず、**FADT** は ACPI の中核テーブルであり、電源管理レジスタの情報と DSDT（Differentiated System Description Table）へのポインタを提供します。次に、**MADT** は、システムの割り込みコントローラ（Local APIC、I/O APIC）の構成を記述し、CPU と割り込みのマッピングを定義します。**MCFG** は、PCIe の MMCONFIG（メモリマップドコンフィギュレーション空間）のベースアドレスを指定し、OS が PCIe デバイスの設定空間にアクセスできるようにします。**HPET** は、高精度タイマのハードウェア情報を提供し、OS がマイクロ秒単位の正確なタイミング制御を行えるようにします。**SRAT** と **SLIT** は、NUMA（Non-Uniform Memory Access）システムにおける CPU とメモリの親和性、およびノード間のレイテンシ情報を記述します。最後に、**BGRT** は、ブート時に表示されたロゴ画像の情報を OS に伝え、OS がシームレスにブート画面を引き継げるようにします。
+
+これらのテーブルを理解することは、UEFI ファームウェア開発において不可欠です。ファームウェアは、ブート時にプラットフォームのハードウェア情報を収集し、これらのテーブルを正確に構築して OS に提供する責任があります。誤った情報が記載されていると、OS はハードウェアを正しく認識できず、システムが起動しなかったり、電源管理が正常に動作しなかったりする可能性があります。また、これらのテーブルは、OS カーネル開発やデバイスドライバ開発においても重要であり、ハードウェアの抽象化層として機能します。
+
+以下では、各テーブルの詳細構造、フィールドの意味、実装例、そして EDK II でのテーブル作成方法について学びます。
+
+---
+
 ## FADT（Fixed ACPI Description Table）
 
-**FADT**（別名 FACP）は、ACPI の中核となるテーブルで、ハードウェアの固定機能レジスタ情報と DSDT へのポインタを格納します。
+**FADT**（別名 FACP）は、ACPI の中核となるテーブルで、ハードウェアの固定機能レジスタ情報と DSDT へのポインタを格納します。FADT は、OS が電源管理レジスタ（PM1a/PM1b Event Block、PM1a/PM1b Control Block、PM Timer など）にアクセスするためのアドレス情報を提供し、システムの電源プロファイル（デスクトップ、モバイル、サーバなど）を OS に通知します。また、FADT は、DSDT（Differentiated System Description Table）の物理アドレスを保持しており、OS は FADT を経由して DSDT を発見し、デバイスツリーと AML コードを取得します。FADT には、64 ビットアドレス拡張フィールド（XDsdt、XPm1aEvtBlk など）が含まれており、ACPI 2.0 以降では、これらの拡張フィールドを使用して 4 GB 以上のアドレス空間をサポートします。
 
 ### FADT の構造
 
@@ -548,35 +560,19 @@ iasl -d *.dat     # 逆アセンブル
 
 ## まとめ
 
-この章では、主要な ACPI テーブルの詳細構造と役割について学びました。
+この章では、主要な ACPI テーブルの詳細構造と役割について学び、UEFI ファームウェアが OS にどのようにハードウェア情報を提供するかを理解しました。
 
-🔑 **重要なポイント：**
+**FADT（Fixed ACPI Description Table）** は、ACPI の中核となるテーブルであり、シグネチャ "FACP" で識別されます。FADT は、**DSDT へのポインタ**を保持しており、OS は FADT を経由して DSDT を発見し、デバイスツリーと AML コードを取得します。FADT は、64 ビット拡張フィールド（XDsdt）を使用して、4 GB 以上のアドレス空間にある DSDT を参照できます。また、FADT は、**電源管理レジスタの情報**を提供し、PM1a/PM1b Event Block（電源ボタンやスリープボタンのイベント）、PM1a/PM1b Control Block（システムの電源状態制御）、PM Timer（ACPI タイマ）、GPE0/GPE1 Block（汎用イベント）のアドレスを OS に通知します。さらに、FADT は、**PreferredPmProfile** フィールドを通じてシステムの電源プロファイル（デスクトップ、モバイル、ワークステーション、エンタープライズサーバ、タブレットなど）を OS に伝え、OS は適切な電源管理ポリシーを選択します。**Fixed Feature Flags** は、WBINVD 命令のサポート、C1/C2 サポート、電源ボタンの種類、RTC ウェイク機能、ドッキングサポート、ハードウェア削減 ACPI（HW_REDUCED_ACPI）、S0 低電力アイドル（LOW_POWER_S0_IDLE_CAPABLE）などのハードウェア機能を示します。
 
-1. **FADT（FACP）**
-   - ACPI の中核テーブル、DSDT へのポインタを保持
-   - PM レジスタ、GPE レジスタのアドレス情報
-   - 電源プロファイル、Fixed Feature Flags
+**MADT（Multiple APIC Description Table）** は、シグネチャ "APIC" で識別され、システムの**割り込みコントローラの構成**を記述します。MADT は、Local APIC のベースアドレス（通常は 0xFEE00000）と、複数の Interrupt Controller Structure を含みます。**Processor Local APIC Structure**（Type 0x00）は、各 CPU コアの APIC ID と有効状態（Enabled, Online Capable）を定義し、OS はこの情報を基に CPU を列挙します。**I/O APIC Structure**（Type 0x01）は、I/O APIC の物理アドレスと、この I/O APIC が扱う GSI（Global System Interrupt）の範囲を指定します。**Interrupt Source Override Structure**（Type 0x02）は、レガシー IRQ（ISA IRQ）を GSI にマッピングし、例えば、IRQ 0（タイマ）を GSI 2 にマッピングすることで、OS はレガシーデバイスの割り込みを正しく扱えます。このマッピングには、Polarity（Active High/Low）と Trigger Mode（Edge/Level）の情報も含まれます。**x2APIC Structure**（Type 0x09）は、拡張 APIC をサポートし、255 個を超える CPU コアを持つシステムで使用されます。
 
-2. **MADT（APIC）**
-   - 割り込みコントローラの構成
-   - Local APIC、I/O APIC、Interrupt Source Override
-   - IRQ から GSI へのマッピング
+**MCFG（Memory Mapped Configuration Table）** は、シグネチャ "MCFG" で識別され、**PCIe の MMCONFIG ベースアドレス**を指定します。MCFG は、Base Address Allocation Structure を含み、各エントリは、MMCONFIG のベースアドレス（例: 0xE0000000）、PCI セグメント番号、開始バス番号、終了バス番号を定義します。例えば、ベースアドレス 0xE0000000、セグメント 0、バス範囲 0-255 の設定では、PCIe コンフィギュレーション空間は、`BaseAddress + (Bus << 20) + (Device << 15) + (Function << 12) + Offset` という式でアドレスが計算され、OS は MMIO アクセスを通じて PCIe デバイスの設定空間を読み書きできます。この仕組みにより、OS は従来の I/O ポートアクセス（0xCF8/0xCFC）を使わずに、より効率的かつ拡張性の高い方法で PCIe デバイスにアクセスできます。
 
-3. **MCFG**
-   - PCIe MMCONFIG ベースアドレス
-   - セグメント、バス範囲の指定
+**その他の重要なテーブル**も、特定の機能を提供します。**HPET（High Precision Event Timer Table）** は、高精度タイマのベースアドレス（例: 0xFED00000）とタイマの特性（コンパレータ数、カウンタサイズ、最小クロックティック）を記述し、OS はマイクロ秒単位の正確なタイミング制御を実現します。**SRAT（System Resource Affinity Table）** は、NUMA システムにおける CPU とメモリの親和性を記述し、Processor Local APIC Affinity Structure は CPU と NUMA ノードの対応を、Memory Affinity Structure はメモリ範囲と NUMA ノードの対応を定義します。**SLIT（System Locality Information Table）** は、NUMA ノード間の相対的な距離（レイテンシ）を N x N 行列で表現し、自ノードは通常 10、リモートノードはより大きい値（例: 20, 30）で示されます。OS はこの情報を基に、メモリアロケーションとプロセススケジューリングを最適化します。**BGRT（Boot Graphics Resource Table）** は、ブート時に表示されたロゴ画像の物理アドレス、画像タイプ（BMP）、画面上の位置（X/Y オフセット）、表示状態、回転方向を OS に伝え、OS はシームレスにブート画面を引き継ぐことができます。
 
-4. **その他の重要テーブル**
-   - **HPET**: 高精度タイマ
-   - **SRAT/SLIT**: NUMA 構成とレイテンシ
-   - **BGRT**: ブートロゴ画像
+**ACPI テーブルの作成と検証**は、UEFI ファームウェア開発の重要なプロセスです。EDK II では、**ACPI Table Protocol**（`gEfiAcpiTableProtocolGuid`）を使用してテーブルをインストールします。ファームウェアは、`LocateProtocol()` で ACPI Table Protocol を取得し、`InstallAcpiTable()` でテーブルをメモリに配置します。すべての ACPI テーブルは**チェックサム**を持ち、テーブル全体のバイト和が 0 になるように計算されます。チェックサムの計算には、`CalculateChecksum8()` のような関数を使用し、まずチェックサムフィールドを 0 に設定し、全バイトの和を計算し、0x100 から引いた値をチェックサムフィールドに格納します。Linux では、`acpidump` コマンドですべての ACPI テーブルをダンプし、`iasl -d` で AML を逆アセンブルして、テーブルの内容を検証できます。この検証プロセスは、ファームウェアが正しくテーブルを構築しているかを確認するために不可欠です。
 
-5. **テーブル作成**
-   - EDK II の ACPI Table Protocol でインストール
-   - チェックサムの計算と検証
-   - `acpidump` と `iasl` でデバッグ
-
-**次章では、SMBIOS と MP テーブルの役割について学びます。**
+次章では、SMBIOS（System Management BIOS）と MP テーブル（MultiProcessor Specification Table）の役割について学び、これらのレガシーテーブルが ACPI とどのように共存し、ハードウェア情報を提供するかを理解します。
 
 ---
 

@@ -16,9 +16,17 @@
 
 ## SMBIOS とは何か
 
-**SMBIOS（System Management BIOS）** は、ハードウェアの構成情報を OS やツールに提供するための標準規格です。
+**SMBIOS（System Management BIOS）** は、ハードウェアの構成情報を OS やツールに提供するための標準規格であり、DMTF（Distributed Management Task Force）によって策定・管理されています。SMBIOS は、システムのメーカー、モデル、シリアル番号、BIOS バージョン、CPU 情報、メモリ構成、マザーボード詳細、拡張カード、ポート情報など、膨大なハードウェアインベントリデータを構造化された形式で提供します。OS は SMBIOS テーブルを読み取ることで、ハードウェアを識別し、ドライバを選択し、システムの健全性を監視できます。また、資産管理ツール、診断ツール、システム管理ソフトウェアも SMBIOS データを活用して、企業環境でのハードウェア管理を自動化します。
 
-### SMBIOS の歴史
+SMBIOS の起源は、1995 年に策定された **DMI 1.0（Desktop Management Interface）** にさかのぼります。DMI は、デスクトップコンピュータのハードウェア情報を標準化する最初の試みであり、主にインベントリ管理を目的としていました。1998 年に、DMI は **SMBIOS 2.0** として再定義され、BIOS がハードウェア情報を提供する標準的な方法として確立されました。SMBIOS 2.0 では、32 ビットアドレス空間を使用し、Entry Point Structure（"_SM_" シグネチャ）を通じてテーブルを発見する仕組みが導入されました。2005 年の **SMBIOS 2.4** では、メモリと CPU の情報が拡張され、2011 年の **SMBIOS 2.7** では、USB 3.0 とソリッドステートドライブ（SSD）のサポートが追加されました。2015 年の **SMBIOS 3.0** は、64 ビットアドレス空間をサポートする **SMBIOS 3.x Entry Point**（"_SM3_" シグネチャ）を導入し、4 GB 以上のアドレス空間に配置されたテーブルにアクセスできるようになりました。2023 年の **SMBIOS 3.7** では、最新のハードウェア（DDR5 メモリ、PCIe 5.0、CXL デバイスなど）のサポートが追加され、現代のサーバとワークステーションの複雑な構成を記述できるようになっています。
+
+SMBIOS の主な目的は、**ハードウェアインベントリの標準化**です。ファームウェアは、ブート時にハードウェアを検出し、SMBIOS テーブルを構築してメモリに配置します。OS は、EFI Configuration Table から SMBIOS Entry Point を取得し、テーブルを解析して、システム情報（Type 1: メーカー、モデル、シリアル番号、UUID）、BIOS 情報（Type 0: ベンダ、バージョン、リリース日）、プロセッサ情報（Type 4: CPU 種類、周波数、コア数、キャッシュサイズ）、メモリ情報（Type 17: DIMM サイズ、速度、メーカー、パートナンバー）、マザーボード情報（Type 2: メーカー、モデル）など、詳細なハードウェア情報を取得します。また、SMBIOS は、**管理ツールでの資産管理**を支援し、企業の IT 部門は、SMBIOS データを自動的に収集してデータベースに格納し、ハードウェアのライフサイクル管理、保証期間の追跡、リプレース計画を立てることができます。さらに、SMBIOS は、**診断ツールでの情報収集**にも使用され、ハードウェアの故障診断、互換性チェック、パフォーマンスベンチマークなどで活用されます。
+
+SMBIOS が提供する情報のカテゴリは、多岐にわたります。まず、**システム情報**（Type 1）では、メーカー（例: Dell、HP、Lenovo）、モデル（例: OptiPlex 9020、ThinkPad X1 Carbon）、シリアル番号（例: S/N: ABC123）、UUID（システム固有の識別子）、ウェイクアップタイプ（電源ボタン、RTC、Wake-on-LAN など）が記録されます。次に、**BIOS 情報**（Type 0）では、ベンダ（例: American Megatrends、Phoenix Technologies）、バージョン（例: v1.0.0）、リリース日（例: 2023/01/15）、BIOS サイズ、BIOS の機能（PCI サポート、Plug and Play、ACPI サポートなど）が含まれます。**プロセッサ情報**（Type 4）では、CPU の種類（Intel Core i7-13700K、AMD Ryzen 9 7950X など）、最大周波数（例: 3.4 GHz）、現在の周波数、コア数（例: 16 コア）、スレッド数（例: 24 スレッド）、キャッシュサイズ（L1、L2、L3）、CPUID、電圧などが記録されます。**メモリ情報**（Type 17）では、各 DIMM のサイズ（例: 16 GB）、速度（例: DDR4-3200、DDR5-4800）、メーカー（例: Samsung、Micron）、パートナンバー、シリアル番号、フォームファクタ（DIMM、SO-DIMM）、データ幅（64 ビット）などが含まれます。**マザーボード情報**（Type 2）では、メーカー（例: ASUS、MSI）、モデル（例: ROG MAXIMUS Z790）、バージョン、シリアル番号、搭載されているチップセット情報などが記録されます。さらに、**デバイス情報**として、ストレージデバイス（例: NVMe SSD 1TB）、ネットワークカード（例: Intel I219-V NIC）、USB ポート、シリアルポート、パラレルポートなどの情報も含まれます。
+
+したがって、SMBIOS は、ハードウェアの詳細な情報を OS とツールに提供する重要な仕組みであり、UEFI ファームウェア開発者は、正確で完全な SMBIOS テーブルを構築することで、システムの管理性、診断性、互換性を向上させることができます。SMBIOS は ACPI と並んで、ファームウェアと OS の間の標準的なインターフェースとして機能し、異なるメーカーのハードウェアでも一貫した方法でシステム情報を取得できるようにします。
+
+### 補足図: SMBIOS の歴史的進化
 
 ```mermaid
 graph LR
@@ -32,13 +40,7 @@ graph LR
     style F fill:#cfc,stroke:#333,stroke-width:2px
 ```
 
-**SMBIOS の目的：**
-- ハードウェアインベントリの提供（CPU、メモリ、BIOS など）
-- 管理ツールでの資産管理
-- OS のハードウェア認識支援
-- 診断ツールでの情報収集
-
-### SMBIOS の用途
+### 参考表: SMBIOS の用途
 
 | カテゴリ | 情報 | 例 |
 |---------|------|-----|
@@ -583,38 +585,19 @@ typedef struct {
 
 ## まとめ
 
-この章では、SMBIOS と MP テーブルの役割について学びました。
+この章では、SMBIOS と MP テーブルの役割について学び、ファームウェアがハードウェアインベントリ情報を OS やツールに提供する仕組みを理解しました。
 
-🔑 **重要なポイント：**
+**SMBIOS の目的**は、**ハードウェアインベントリの標準化**です。SMBIOS は、DMTF（Distributed Management Task Force）によって策定された業界標準規格であり、システムのメーカー、モデル、シリアル番号、BIOS バージョン、CPU 情報、メモリ構成、マザーボード詳細、拡張カード、ポート情報など、膨大なハードウェアデータを構造化された形式で提供します。OS は SMBIOS テーブルを読み取ることで、ハードウェアを識別し、ドライバを選択し、システムの健全性を監視できます。また、**資産管理ツール**は SMBIOS データを自動的に収集してデータベースに格納し、企業の IT 部門はハードウェアのライフサイクル管理、保証期間の追跡、リプレース計画を立てることができます。さらに、**診断ツール**は SMBIOS データを活用してハードウェアの故障診断、互換性チェック、パフォーマンスベンチマークを実行します。SMBIOS の歴史は、1995 年の DMI 1.0 から始まり、1998 年の SMBIOS 2.0 で BIOS がハードウェア情報を提供する標準的な方法として確立され、2015 年の SMBIOS 3.0 で 64 ビットアドレス空間のサポートが追加され、2023 年の SMBIOS 3.7 では最新のハードウェア（DDR5、PCIe 5.0、CXL）のサポートが実現されました。
 
-1. **SMBIOS の目的**
-   - ハードウェアインベントリの標準化
-   - OS・ツールへの情報提供
-   - 資産管理・診断ツールでの活用
+**SMBIOS の構造**は、**Entry Point Structure** と複数の **SMBIOS Structure** から構成されます。SMBIOS には2つの Entry Point 形式があります。まず、**SMBIOS 2.x Entry Point** は 32 ビットアドレス空間を使用し、シグネチャ "_SM_"（4 バイト）と "_DMI_"（中間アンカー）を持ち、TableAddress フィールド（32 ビット）で SMBIOS テーブルの物理アドレスを指定します。次に、**SMBIOS 3.x Entry Point** は 64 ビットアドレス空間をサポートし、シグネチャ "_SM3_"（5 バイト）を持ち、TableAddress フィールド（64 ビット）で 4 GB 以上のアドレス空間にあるテーブルを参照できます。UEFI 環境では、OS は EFI Configuration Table から GUID（`gEfiSmbios3TableGuid` または `gEfiSmbiosTableGuid`）を検索して Entry Point を取得します。各 SMBIOS 構造体は、**Structure Header**（Type、Length、Handle）を持ち、Type はテーブルの種類（0 = BIOS Information、1 = System Information など）を示し、Length はフォーマット部分のサイズを示し、Handle は一意な識別子を提供します。**文字列の格納方法**は、SMBIOS 構造体の後に NULL 終端文字列の配列として格納され、文字列セクションの終端はダブル NULL（2つの連続する 0x00）で示されます。例えば、Type 0 の Vendor フィールドが 1 の場合、1番目の文字列（"American Megatrends\0"）が Vendor 名を示します。
 
-2. **SMBIOS 構造**
-   - **Entry Point**: SMBIOS 2.x (32-bit) と 3.x (64-bit)
-   - **Structure Header**: Type, Length, Handle
-   - **文字列**: NULL 終端文字列の配列、ダブル NULL で終端
+**主要な SMBIOS テーブルタイプ**は、さまざまなハードウェア情報を提供します。**Type 0（BIOS Information）** は、BIOS ベンダ（例: American Megatrends）、BIOS バージョン（例: 1.0.0）、リリース日（例: 2023/01/15）、BIOS サイズ（例: 8 MB）、BIOS の機能（PCI サポート、Plug and Play、ACPI サポートなど）、システム BIOS のメジャー/マイナーリリース、Embedded Controller のファームウェアバージョンを記録します。**Type 1（System Information）** は、メーカー（例: Dell、HP）、製品名（例: OptiPlex 9020）、バージョン、シリアル番号、UUID（Universal Unique ID）、ウェイクアップタイプ（電源ボタン、RTC、Wake-on-LAN）、SKU 番号、ファミリーを含みます。**Type 2（Baseboard Information）** は、マザーボードのメーカー（例: ASUS、MSI）、製品名（例: ROG MAXIMUS Z790）、バージョン、シリアル番号、アセットタグ、機能フラグ、ボードタイプ、シャーシハンドルを記録します。**Type 4（Processor Information）** は、CPU のソケット、プロセッサタイプ、ファミリー（Intel、AMD）、メーカー、CPUID、バージョン、電圧、外部クロック、最大速度、現在速度、ステータス、L1/L2/L3 キャッシュハンドル、シリアル番号、パートナンバー、コア数、有効コア数、スレッド数、特性を含みます。**Type 17（Memory Device）** は、各 DIMM の物理メモリアレイハンドル、トータル幅、データ幅、サイズ、フォームファクタ（DIMM、SO-DIMM）、デバイスロケーター（例: DIMM A1）、バンクロケーター、メモリタイプ（DDR4 = 26、DDR5 = 34）、速度（MT/s）、メーカー、シリアル番号、パートナンバー、設定済み速度、電圧、メモリテクノロジー（DRAM = 3）、揮発性/不揮発性サイズなどを記録します。
 
-3. **主要テーブルタイプ**
-   - **Type 0**: BIOS Information
-   - **Type 1**: System Information
-   - **Type 2**: Baseboard Information
-   - **Type 4**: Processor Information
-   - **Type 17**: Memory Device
+**SMBIOS データの取得方法**は、プラットフォームによって異なります。**Linux** では、`dmidecode` コマンドを使用してすべての SMBIOS テーブルをダンプでき、`sudo dmidecode -t 0`（BIOS Information）、`-t 1`（System Information）、`-t 4`（Processor Information）、`-t 17`（Memory Device）のように特定のタイプのみを表示できます。**UEFI アプリケーション**では、EFI Configuration Table から SMBIOS Entry Point を取得し、Entry Point の TableAddress フィールドからテーブルの物理アドレスを取得し、各構造体を順番に走査し、Type が 127（End-of-Table）に達するまで処理を続けます。構造体の後の文字列セクションは、ダブル NULL が見つかるまで読み取ります。**EDK II でのテーブル作成**では、`EFI_SMBIOS_PROTOCOL`（`gEfiSmbiosProtocolGuid`）を使用して SMBIOS レコードをインストールします。まず、`LocateProtocol()` で SMBIOS Protocol を取得し、次に構造体とその後の文字列領域を含むメモリを確保し、構造体のフィールド（Type、Length、Handle など）と文字列（NULL 終端、ダブル NULL で終端）を設定し、最後に `Smbios->Add()` でテーブルを追加します。Handle は `SMBIOS_HANDLE_PI_RESERVED` を指定すると自動的に割り当てられます。
 
-4. **SMBIOS データ取得**
-   - Linux: `dmidecode`
-   - UEFI: EFI Configuration Table → Entry Point → テーブル列挙
-   - EDK II: `EFI_SMBIOS_PROTOCOL` で追加
+**MP テーブル（MultiProcessor Specification Table）** は、レガシーな割り込みコントローラ情報を提供する規格であり、Intel MultiProcessor Specification で定義されています。MP テーブルは、MP Floating Pointer Structure（シグネチャ "_MP_"）から始まり、MP Configuration Table Header（シグネチャ "PCMP"）を参照し、Local APIC アドレス、CPU エントリ、I/O APIC エントリ、割り込みマッピングなどを記録します。しかし、**現在は ACPI MADT に置き換えられており**、MP テーブルはレガシー OS（古い Linux カーネルなど）でのみ使用されます。ACPI MADT は、MP テーブルと比較して、x86 だけでなく ARM、RISC-V などの他のアーキテクチャもサポートし、割り込みの Polarity（Active High/Low）と Trigger Mode（Edge/Level）を詳細に設定でき、より柔軟で拡張性の高い仕組みを提供します。現代のファームウェアは、ACPI MADT を提供することが標準であり、MP テーブルはレガシー互換性のためにのみ含まれることがあります。
 
-5. **MP テーブル（レガシー）**
-   - MultiProcessor Specification で定義
-   - ACPI MADT に置き換えられた
-   - レガシー OS のみで使用
-
-**次章では、Part III のまとめを行います。**
+次章では、Part III のまとめを行い、プラットフォーム初期化フェーズ全体を振り返り、PEI フェーズ、DRAM 初期化、CPU とチップセット初期化、PCH/SoC 初期化、PCIe 列挙、ACPI テーブル、SMBIOS テーブルの役割を統合的に理解します。
 
 ---
 

@@ -16,9 +16,15 @@
 
 ## 信頼の起点（Root of Trust）
 
-**Root of Trust（RoT）** は、セキュリティシステムの基盤となる、無条件に信頼される最小限のコンポーネントです。
+**Root of Trust（RoT）** は、セキュリティシステムの基盤となる、無条件に信頼される最小限のコンポーネントです。セキュリティの文脈において、すべてのシステムは何らかの信頼の起点を必要とします。なぜなら、無限に信頼を検証することは不可能であり、どこかの時点で「これは信頼できる」と仮定しなければならないからです。Root of Trust は、この信頼の連鎖の最初の一歩であり、ハードウェアレベルで実装され、変更不可能（Immutable）であり、攻撃者が容易に侵害できないように設計されています。
 
-### Root of Trust の種類
+Root of Trust には、**4つの主要なタイプ**があります。まず、**RTM（Root of Trust for Measurement）** は、ブートコンポーネントの測定を担当し、各ブートステージのコードやデータのハッシュ値を計算し、TPM の PCR（Platform Configuration Register）に記録します。RTM は、ブートプロセスの各段階で「何が実行されたか」を記録する責任を持ち、後でリモート証明（Remote Attestation）を通じて、システムが信頼できる状態で起動したことを証明するために使用されます。実装例として、CPU のマイクロコードや Boot ROM が RTM の役割を果たします。次に、**RTV（Root of Trust for Verification）** は、デジタル署名の検証を担当し、各ブートステージのコードが信頼された発行者によって署名されていることを確認します。RTV は、CPU 内蔵の公開鍵や OTP（One-Time Programmable）fuse に保存された鍵ハッシュを使用して、署名を検証し、署名が無効な場合は起動を停止します。Intel Boot Guard や AMD PSP は RTV の典型的な実装です。**RTS（Root of Trust for Storage）** は、秘密情報（暗号鍵、パスワード、証明書など）の安全な保存を担当し、TPM、fTPM（Firmware TPM）、PSP などのセキュアな領域にデータを保管し、外部からの不正なアクセスを防ぎます。最後に、**RTR（Root of Trust for Reporting）** は、測定値の証明と報告を担当し、TPM Quote などの機能を使用して、PCR に記録された測定値をデジタル署名し、リモートの検証者に送信することで、システムの完全性を証明します。
+
+Hardware Root of Trust の実装は、プラットフォームごとに異なります。**Intel プラットフォーム**では、CPU のマイクロコード内の不変領域が Root of Trust として機能し、Initial Boot Block（IBB）を検証します。IBB は、ファームウェアの最初の部分であり、CPU に内蔵された公開鍵（または OTP fuse に保存された鍵ハッシュ）を使用して署名が検証されます。IBB の検証に成功すると、IBB が次に PEI Core を検証し、PEI Core が DXE Core を検証するという信頼の連鎖が形成されます。**AMD プラットフォーム**では、PSP（Platform Security Processor）という ARM Cortex-A5 ベースの独立したプロセッサが Root of Trust として機能します。PSP は、CPU に内蔵された Boot ROM から起動し、PSP Firmware を検証し、その後 x86 BIOS（PEI）を検証します。PSP は、x86 CPU とは独立して動作するため、x86 側が侵害されていても、PSP は信頼できる状態を維持でき、システムの完全性を保証します。
+
+したがって、Root of Trust は、セキュリティシステムの最も基盤となる要素であり、ハードウェアレベルで実装され、変更不可能であることが求められます。Root of Trust が侵害されると、その上に構築されたすべてのセキュリティ機構が無効になるため、Root of Trust の保護は最優先事項となります。
+
+### 補足図: Root of Trust の4つのタイプ
 
 ```mermaid
 graph TD
@@ -35,7 +41,7 @@ graph TD
     style A fill:#fbb,stroke:#333,stroke-width:2px
 ```
 
-**各 Root of Trust の役割：**
+### 参考表: 各 Root of Trust の役割
 
 | RoT | 正式名称 | 役割 | 実装例 |
 |-----|---------|------|--------|
@@ -44,9 +50,8 @@ graph TD
 | **RTS** | Root of Trust for Storage | 秘密情報の安全な保存 | TPM, fTPM, PSP |
 | **RTR** | Root of Trust for Reporting | 測定値の証明・報告 | TPM Quote |
 
-### Hardware Root of Trust の実装
+### 補足図: Hardware Root of Trust の実装（Intel）
 
-**Intel プラットフォーム:**
 ```mermaid
 graph LR
     A[CPU Microcode<br/>不変領域] -->|検証| B[Initial Boot Block<br/>IBB]
@@ -56,7 +61,8 @@ graph LR
     style A fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
-**AMD プラットフォーム:**
+### 補足図: Hardware Root of Trust の実装（AMD）
+
 ```mermaid
 graph LR
     A[PSP Boot ROM<br/>CPU 内蔵] -->|検証| B[PSP Firmware]
@@ -535,35 +541,19 @@ CheckAntiRollback (
 
 ## まとめ
 
-この章では、信頼チェーン（Chain of Trust）の構築について学びました。
+この章では、信頼チェーン（Chain of Trust）の構築について学び、Root of Trust から始まり、各ブートステージが次のステージを検証する仕組み、そして信頼を連鎖的に伝播させる方法を理解しました。
 
-🔑 **重要なポイント：**
+**Root of Trust（RoT）** は、セキュリティシステムの基盤となる、無条件に信頼される最小限のコンポーネントであり、4つの主要なタイプがあります。まず、**RTM（Root of Trust for Measurement）** は、ブートコンポーネントの測定を担当し、各ブートステージのハッシュ値を計算して TPM の PCR（Platform Configuration Register）に記録し、後でリモート証明を可能にします。**RTV（Root of Trust for Verification）** は、デジタル署名の検証を担当し、CPU 内蔵の公開鍵や OTP fuse に保存された鍵ハッシュを使用して、各ブートステージのコードが信頼された発行者によって署名されていることを確認し、署名が無効な場合は起動を停止します。**RTS（Root of Trust for Storage）** は、秘密情報（暗号鍵、パスワード、証明書）の安全な保存を担当し、TPM、fTPM、PSP などのセキュアな領域にデータを保管し、外部からの不正なアクセスを防ぎます。**RTR（Root of Trust for Reporting）** は、測定値の証明と報告を担当し、TPM Quote などの機能を使用して、PCR に記録された測定値をデジタル署名し、リモートの検証者に送信することで、システムの完全性を証明します。
 
-1. **Root of Trust (RoT)**
-   - RTM: 測定
-   - RTV: 検証
-   - RTS: 保存
-   - RTR: 報告
+**信頼チェーンの原則**は、3つの重要な特性によって定義されます。まず、**不変性（Immutability）** は、Root of Trust が変更不可能であることを要求します。RoT は、CPU 内蔵の ROM、OTP fuse、またはハードウェアで保護された領域に保存され、攻撃者が容易に改竄できないようになっています。もし RoT が変更可能であれば、攻撃者は RoT 自体を侵害して、その上に構築されたすべてのセキュリティ機構を無効化できてしまいます。次に、**順次性（Sequential Verification）** は、各段階が次の段階のみを検証するという原則です。例えば、IBB（Initial Boot Block）は PEI Core を検証し、PEI Core は DXE Core を検証し、DXE Core は BDS を検証し、BDS は OS Loader を検証します。各段階は、自分の次の段階のみを検証し、それより先の段階については関与しません。この順次検証により、信頼が段階的に伝播します。最後に、**連鎖性（Chain Property）** は、一つでも検証が失敗すれば、全体が失敗するという原則です。例えば、PEI Core の署名検証が失敗した場合、その時点でブートプロセスは停止し、後続の段階（DXE、BDS、OS Loader）は実行されません。この連鎖性により、信頼の連鎖が断絶した場合、システムは安全な状態（起動停止またはリカバリモード）に移行します。
 
-2. **信頼チェーンの原則**
-   - 不変性: RoT は変更不可能
-   - 順次性: 各段階は次の段階のみを検証
-   - 連鎖性: 一つでも失敗なら全体が失敗
+**SRTM（Static Root of Trust for Measurement）と DRTM（Dynamic Root of Trust for Measurement）** は、2つの異なる測定起動の方式です。**SRTM** は、電源投入時から測定を開始する方式であり、ブートプロセスの各段階を順次測定し、TPM の PCR 0-7 に記録します。例えば、PCR 0 には UEFI ファームウェアコード、PCR 1 には UEFI ファームウェア設定、PCR 2 には Option ROM、PCR 4 には MBR/GPT、PCR 7 には Secure Boot 状態が記録されます。SRTM の限界は、電源投入時のみ測定を開始するため、OS 実行中の動的な脅威に対応できず、また測定はするが検証はしない（起動は止めない）ことです。**DRTM** は、OS 実行中に新しい信頼チェーンを動的に開始できる方式であり、Intel TXT（Trusted Execution Technology）の GETSEC[SENTER] 命令や、AMD の SKINIT 命令を使用して実現されます。DRTM では、SINIT ACM（Authenticated Code Module）が CPU によって検証・実行され、SINIT が TPM の PCR 17, 18 をリセットし、MLE（Measured Launch Environment、例: Xen ハイパーバイザ）を測定して起動します。DRTM は、OS 起動後でも信頼された環境を動的に構築できるため、仮想化やコンテナ環境でのセキュリティ強化に使用されます。
 
-3. **SRTM vs DRTM**
-   - **SRTM**: 電源投入時から測定、PCR 0-7
-   - **DRTM**: 動的に測定開始、PCR 17-18、Intel TXT / AMD SKINIT
+**署名検証の仕組み**は、公開鍵暗号を基盤としています。まず、ファームウェアイメージのハッシュ値を SHA-256 や SHA-384 で計算します。次に、署名データを RSA または ECDSA の公開鍵で復号し、復号されたハッシュ値と計算したハッシュ値を比較します。両者が一致すれば、署名は有効であり、イメージは信頼された発行者によって署名されていることが確認されます。公開鍵の保管場所は、セキュリティレベルによって異なります。**CPU 内蔵 ROM** は最高のセキュリティを提供し、RoT の最初の検証に使用されます。**OTP Fuse** は、1回のみ書き込み可能であり、Boot Guard や PSP の鍵ハッシュを保存します。**SPI Flash の保護領域**は、ファームウェア更新で変更可能ですが、Protected Range Registers（PRR）や Flash Descriptor で書き込み保護されており、UEFI 署名鍵を保存します。**UEFI 変数**は、OS から変更可能であり、セキュリティが低いため、鍵の保管には非推奨です。
 
-4. **署名検証**
-   - 公開鍵暗号（RSA, ECDSA）
-   - ハッシュ（SHA-256, SHA-384）
-   - 鍵の保管（CPU ROM, OTP Fuse, Flash 保護領域）
+**攻撃と対策**として、2つの重要な脅威を学びました。まず、**TOCTOU（Time-of-Check to Time-of-Use）攻撃**は、署名検証の時点と実行の時点の間に、攻撃者がメモリを書き換える攻撃です。対策として、検証するイメージのコピーを作成し、コピーを検証した後、メモリ属性を Read-Only に設定し、保護されたコピーを実行します。この方法により、検証後の改竄を防ぎます。次に、**Replay 攻撃**は、古いファームウェア（既知の脆弱性あり）を、正規の署名付きで復元する攻撃です。対策として、**Anti-Rollback カウンタ**を OTP fuse に保存し、ファームウェアのバージョン番号を記録します。新しいファームウェアをインストールする際、OTP fuse の最小バージョンを更新し、それより古いバージョンのファームウェアは、たとえ署名が有効でも拒否されます。また、**リボケーションリスト（Revocation List）** を使用して、古い署名を無効化することもできます。
 
-5. **攻撃と対策**
-   - **TOCTOU**: メモリ保護で対策
-   - **Replay**: Anti-Rollback カウンタで対策
-
-**次章では、UEFI Secure Boot の詳細な仕組みについて学びます。**
+次章では、**UEFI Secure Boot の詳細な仕組み**について学び、Platform Key（PK）、Key Exchange Key（KEK）、Signature Database（db）、Forbidden Signature Database（dbx）という鍵階層、署名検証のフロー、Shim と MOK（Machine Owner Key）の役割、そして Secure Boot の設定と管理方法を理解します。
 
 ---
 

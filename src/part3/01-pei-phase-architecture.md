@@ -18,7 +18,17 @@
 
 ### ブートプロセスでの位置づけ
 
-PEI (Pre-EFI Initialization) Phase は、**SEC Phase の次**、**DXE Phase の前**に実行されるブートフェーズです。主な役割は、**最小限のハードウェア初期化**を行い、DXE Phase が動作できる環境を整えることです。
+PEI (Pre-EFI Initialization) Phase は、UEFI ブートプロセスにおいて**SEC Phase の次**、**DXE Phase の前**に実行される重要なブートフェーズです。PEI Phase の主な役割は、**最小限のハードウェア初期化**を行い、DXE Phase が動作できる環境を整えることです。この段階では、システムはまだ完全には初期化されておらず、DRAM (システムメモリ) さえ使用可能になっていません。そのため、PEI Phase は非常に限られたリソースの中で、最も基本的な初期化タスクを実行しなければなりません。
+
+PEI Phase が直面する最大の課題は、**DRAM が初期化されていない**ことです。通常のソフトウェア開発では、メモリは当然のように使用できるリソースですが、ファームウェアの初期段階では、メモリコントローラが設定されておらず、DRAM は使用不可能です。C 言語のコードを実行するには、スタックとヒープが必要ですが、DRAM がない状態でこれらをどのように確保するかが PEI Phase の最初の挑戦です。この問題を解決するために、PEI Phase は **Cache as RAM (CAR)** という技術を使用します。CAR は、CPU のキャッシュメモリを一時的な RAM として使用し、DRAM が初期化されるまでの間、スタックとヒープを提供します。
+
+PEI Phase のもう一つの重要な役割は、**DXE Phase への準備**です。DXE Phase は、ドライバをロードし、プロトコルを公開し、デバイスを初期化する段階ですが、そのためには、システムのハードウェア構成に関する情報が必要です。PEI Phase は、CPU の数と周波数、メモリの容量と配置、チップセットの設定などの情報を収集し、**HOB (Hand-Off Block)** というデータ構造を通じて DXE Phase に渡します。この情報により、DXE Phase は適切なドライバをロードし、正しいデバイスを初期化できます。
+
+PEI Phase は、**移植性と拡張性**を重視して設計されています。異なるプラットフォーム (Intel、AMD、ARM など) では、CPU やチップセットの初期化手順が大きく異なります。PEI Phase は、これらのプラットフォーム固有の処理を **PEIM (PEI Module)** という独立したモジュールにカプセル化し、**PPI (PEIM-to-PEIM Interface)** という標準的なインターフェースを通じて通信します。この設計により、PEI Core (PEI Phase の中核部分) は共通化され、プラットフォーム固有の部分だけを差し替えることで、異なるプラットフォームに対応できます。
+
+PEI Phase が解決しなければならない課題は、複数の側面にわたります。まず、**メモリ不在**の問題です。DRAM が初期化されていないため、CAR で一時メモリを提供する必要があります。次に、**最小限の初期化**の課題です。CPU、チップセット、クロックジェネレータなどを最低限動作させ、次のフェーズに進める状態にする必要があります。さらに、**DXE への準備**の課題です。DXE Phase が必要とする情報 (メモリマップ、CPU 情報、Firmware Volume の位置など) を HOB リストに記録しなければなりません。最後に、**移植性**の課題です。異なるプラットフォームに対応するため、PPI によるモジュール間通信を実装する必要があります。
+
+**補足図: PEI Phase のブートプロセスでの位置づけ**
 
 ```mermaid
 graph LR
@@ -36,7 +46,7 @@ graph LR
     style PEI_DESC fill:#fff4e1
 ```
 
-### PEI Phase が解決する課題
+**参考表: PEI Phase が解決する課題**
 
 | 課題 | 説明 | PEI での解決方法 |
 |------|------|-----------------|
@@ -419,36 +429,19 @@ graph TB
 
 ## まとめ
 
-### この章で学んだこと
+この章では、PEI (Pre-EFI Initialization) Phase の役割、アーキテクチャ、そして動作原理を詳しく学びました。PEI Phase は、UEFI ブートプロセスにおいて SEC Phase の次、DXE Phase の前に実行される重要なブートフェーズです。PEI Phase の主な役割は、メモリ初期化前の最小限のハードウェア初期化を行い、DXE Phase が動作するための環境を準備することです。この段階では、DRAM がまだ初期化されていないため、非常に限られたリソースの中で、最も基本的な初期化タスクを実行しなければなりません。
 
-✅ **PEI Phase の役割**
-- メモリ初期化前の最小限のハードウェア初期化
-- DXE Phase が動作するための環境準備
+**PEI のアーキテクチャ**は、PEI Core と複数の PEIM (PEI Module) で構成されます。PEI Core は、PEIM の管理、PPI の管理、HOB の管理という三つの主要な責務を持ちます。PEI Core は、Firmware Volume から PEIM を発見し、依存関係 (Depex) に基づいて適切な順序でロードします。PEIM は、初期化タスクを実行する独立したモジュールであり、Platform PEIM、CPU PEIM、Memory Init PEIM、Chipset PEIM など、複数の種類があります。各 PEIM は、特定の初期化タスクに責任を持ち、他の PEIM と協調して動作します。
 
-✅ **PEI アーキテクチャ**
-- PEI Core: PEIM の管理、PPI 管理、HOB 管理
-- PEIM: 初期化タスクを実行するモジュール
+**PPI (PEIM-to-PEIM Interface)** は、PEI Phase における Protocol に相当します。PPI は、PEIM 間で機能を共有するためのインターフェースであり、GUID によって一意に識別されます。PPI は、Protocol よりもシンプルで、一時メモリ (CAR) やリソース制限を考慮した設計になっています。PEI Core は、InstallPpi、LocatePpi、NotifyPpi などの PPI サービスを提供し、PEIM 間の通信を管理します。NotifyPpi により、特定の PPI がインストールされたときにコールバック関数を実行できるため、PEIM は他の PEIM の初期化完了を検知し、適切なタイミングで処理を実行できます。
 
-✅ **PPI**
-- PEIM 間の通信インターフェース
-- Protocol の PEI 版、よりシンプル
+**Cache as RAM (CAR)** は、PEI Phase の最も重要な技術の一つです。DRAM が初期化されていない段階では、C 言語のコードを実行するためのスタックとヒープがありません。CAR は、CPU のキャッシュメモリを一時的な RAM として使用することで、この問題を解決します。CAR のセットアップは、SEC Phase の終わりまたは PEI Phase の開始時に実行され、MTRR (Memory Type Range Register) を設定し、特定範囲を Write-Back に設定し、Cache Fill と No-Evict Mode を有効化します。CAR のサイズは、数十 KB から数百 KB に制限されており、スタックとヒープが非常に限られるため、PEI Phase では最小限の処理のみを実行します。
 
-✅ **Cache as RAM (CAR)**
-- DRAM 初期化前の一時メモリ
-- CPU キャッシュを RAM として使用
-- サイズ制限あり（数十～数百 KB）
+**メモリ初期化**は、PEI Phase の最も重要なタスクです。Memory Init PEIM は、DRAM コントローラを初期化し、SPD (Serial Presence Detect) を読み取り、メモリトレーニングを実行して、DRAM を使用可能な状態にします。多くのプラットフォームでは、FSP (Firmware Support Package) の FspMemoryInit() API を呼び出してメモリ初期化を実行します。DRAM が初期化されると、PEI Core は CAR の内容を DRAM にコピーし、以降は DRAM を使用します。この移行により、スタックとヒープのサイズ制限が解消され、より複雑な初期化タスクを実行できるようになります。
 
-✅ **メモリ初期化**
-- Memory Init PEIM による DRAM 初期化
-- CAR から DRAM への移行
+**HOB (Hand-Off Block)** は、PEI Phase で収集したハードウェア情報を DXE Phase に渡すためのデータ構造です。HOB には、PHIT (Phase Handoff Information Table)、Memory Allocation、Resource Descriptor、GUID Extension、Firmware Volume、CPU など、複数の種類があります。PEI Phase は、メモリマップ、CPU 情報、Firmware Volume の位置、プラットフォーム固有の設定などを HOB リストに記録します。DXE Phase は、この HOB リストを読み取り、適切なドライバをロードし、正しいデバイスを初期化します。HOB は、ブートフェーズ間の情報受け渡しを標準化し、移植性を向上させます。
 
-✅ **HOB**
-- PEI で収集した情報を DXE に渡す
-- メモリマップ、CPU 情報、FV 位置など
-
-✅ **PEI → DXE 遷移**
-- DXE IPL PEIM が DXE Core をロード
-- HOB リストを引き継ぎ
+**PEI から DXE への遷移**は、DXE IPL (Initial Program Load) PEIM が担当します。DXE IPL PEIM は、PEI Phase の最後に実行され、Firmware Volume から DXE Core を検索し、DRAM にロードし、HOB リストのポインタを渡し、DXE Core のエントリーポイントにジャンプします。この遷移により、ブートプロセスは PEI Phase から DXE Phase に移行し、より高レベルの初期化とドライバのロードが開始されます。DXE Phase は、PEI Phase が準備した環境とデータを基に、システムのすべてのデバイスを初期化し、OS の起動に必要なプロトコルを提供します。
 
 ### 次章の予告
 

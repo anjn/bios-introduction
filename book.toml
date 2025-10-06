@@ -27,7 +27,7 @@ boost-paragraph = 1
 expand = true
 heading-split-level = 3
 
-[output.pdf]
+#[output.pdf]
 
 [preprocessor]
 

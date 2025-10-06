@@ -22,18 +22,15 @@
 
 ## SPI Flash とは
 
-### SPI Flash の役割
+**SPI Flash** は、BIOS/UEFI ファームウェアを格納する不揮発性メモリであり、システムの**Root of Trust** を保持する最も重要なコンポーネントの 1 つです。SPI Flash は、Serial Peripheral Interface（SPI）プロトコルを使用して CPU/PCH（Platform Controller Hub）と通信し、起動時に BIOS コードを提供します。一般的な PC では、8MB から 32MB 程度の容量の SPI Flash チップ（Winbond W25Q128、Micron N25Q などが使用されています。SPI Flash の保護が不十分だと、攻撃者は物理的にチップを取り外して書き換えたり、ソフトウェアから不正に書き込んだりすることで、**すべてのセキュリティ機構を無効化**できてしまいます。したがって、SPI Flash の保護は、[Part IV Chapter 5](./05-intel-boot-guard.md) や [Part IV Chapter 6](./06-amd-psp.md) で説明した Boot Guard や PSP といったセキュリティ機構の**基盤**となります。
 
-**SPI Flash** は、BIOS/UEFI ファームウェアを格納する不揮発性メモリです：
+SPI Flash の主要な役割は、**4つの重要な機能**に集約されます。まず、**BIOS の保存**では、UEFI ファームウェアイメージ全体（SEC、PEI Core、DXE Core、BDS、UEFI ドライバなど）を格納します。このファームウェアコードは、電源投入時にリセットベクタから実行される最初のコードであり、システム全体の信頼チェーンの起点となります。次に、**設定の保存**では、UEFI 変数（NVRAM 変数）、ブート設定、Secure Boot の鍵データベース（PK、KEK、db、dbx）を格納します。これらの設定は、OS が起動した後も参照され、セキュアブートの検証や起動順序の制御に使用されます。さらに、**管理データの保存**では、Intel Management Engine（ME）や AMD Platform Security Processor（PSP）のファームウェアを格納します。ME/PSP は、x86 CPU とは独立したプロセッサであり、独自のファームウェアを SPI Flash から読み込んで実行します。最後に、**リカバリ**では、BIOS が破損した場合に備えて、BIOS リカバリイメージを格納します。リカバリイメージは、通常、Flash の保護された領域に配置され、緊急時に使用されます。
 
-1. **BIOS の保存**: UEFI ファームウェアイメージ全体を格納
-2. **設定の保存**: UEFI 変数、ブート設定
-3. **管理データの保存**: Intel ME、AMD PSP のファームウェア
-4. **リカバリ**: BIOS リカバリイメージ
+SPI Flash は、CPU/PCH とどのように接続されているかを理解することも重要です。SPI Flash は、**6本の信号線**で PCH の SPI コントローラに接続されています。まず、**CLK（Clock）** は、データ転送のタイミングを制御するクロック信号であり、通常 16-50 MHz で動作します。起動直後は低速（数 MHz）で動作し、BIOS が初期化後に高速化します。次に、**MOSI（Master Out Slave In）** は、CPU/PCH から Flash へのデータ送信線であり、書き込みコマンドやアドレスを送信します。**MISO（Master In Slave Out）** は、Flash から CPU/PCH へのデータ受信線であり、読み取ったデータを受け取ります。**CS#（Chip Select）** は、Flash チップを選択する信号であり、アクティブ Low（0 で選択）です。複数の Flash がある場合は、CS# で切り替えます。さらに、**WP#（Write Protect）** は、ハードウェア書き込み保護ピンであり、このピンを Low にすると、Flash の Status Register の一部ビットが変更不可になります。これにより、ソフトウェアから保護設定を解除できなくなります。最後に、**HOLD#（Hold）** は、データ転送を一時停止する信号ですが、現代のシステムではあまり使用されません。
 
-> **Note**: SPI Flash は、システムの**Root of Trust**を格納する最も重要なコンポーネントの1つです。その保護が不十分だと、すべてのセキュリティ機構が無効化されます。
+SPI Flash 内部は、**複数のリージョン（Region）** に分割されており、各リージョンは異なる目的で使用されます。Flash の先頭 4KB には、**Flash Descriptor** が配置されます。Flash Descriptor は、Flash 全体の制御データであり、各リージョンの位置とサイズ、アクセス権限を定義します。これは、SPI Flash の「目次」のような役割を果たし、CPU/PCH/ME がどのリージョンにアクセスできるかを制御します。次に、**Intel ME / AMD PSP リージョン**（通常 1-7 MB）には、Management Engine または Platform Security Processor のファームウェアと設定データが格納されます。ME/PSP は、x86 CPU よりも先に起動し、このリージョンからファームウェアをロードします。さらに、**GbE（Gigabit Ethernet）リージョン**（通常 8 KB、オプショナル）には、オンボード Ethernet コントローラの設定（MAC アドレスなど）が格納されます。**Platform Data リージョン**には、OEM 固有のデータや設定が格納されます。最後に、**BIOS リージョン**（通常 4-8 MB）には、UEFI ファームウェアイメージ全体が格納されます。このリージョンには、SEC（リセットベクタ）、PEI Core、DXE Core、UEFI 変数、Boot Guard の ACM/KM/BPM などが含まれます。この複数リージョン構造により、ME/PSP と BIOS が異なる領域を使用し、相互に干渉しないようになっています。
 
-### SPI Flash の物理接続
+### 補足図：SPI Flash の物理接続
 
 ```mermaid
 graph LR
@@ -806,35 +803,17 @@ qemu-system-x86_64 \
 
 ## まとめ
 
-この章では、SPI Flash の保護機構について詳しく学びました：
+この章では、**SPI Flash の保護機構**について詳しく学びました。SPI Flash は、BIOS/UEFI ファームウェアを格納する不揮発性メモリであり、システムの**Root of Trust** を保持する最も重要なコンポーネントです。SPI Flash の保護が不十分だと、攻撃者は物理的にチップを取り外して書き換えたり、ソフトウェアから不正に書き込んだりすることで、**すべてのセキュリティ機構を無効化**できてしまいます。したがって、Boot Guard、PSP、Secure Boot といったセキュリティ機構は、すべて SPI Flash の保護が前提となります。SPI Flash は、6本の信号線（CLK、MOSI、MISO、CS#、WP#、HOLD#）で PCH の SPI コントローラに接続されており、複数のリージョン（Flash Descriptor、ME/PSP、GbE、Platform Data、BIOS）に分割されています。
 
-### ✅ 重要なポイント
+**Flash Descriptor** は、SPI Flash の先頭 4KB に配置される制御データであり、Flash 全体の「目次」として機能します。Flash Descriptor は、**3つの重要な役割**を果たします。まず、**リージョンの定義**では、Flash 内の各領域（Descriptor、BIOS、ME/PSP、GbE、Platform Data）の位置とサイズを定義します。各リージョンは 4KB 単位で Base と Limit が指定され、異なる目的で使用されます。次に、**アクセス権限の設定**では、各マスター（CPU/BIOS、ME/PSP、GbE Controller）がアクセス可能な領域を定義します。これにより、例えば BIOS は BIOS リージョンのみ書き込み可能で、ME リージョンは読み取り専用という制限を設定できます。さらに、**ストラップ設定**では、CPU/PCH の初期設定（起動モード、クロック設定など）を定義します。Flash Descriptor は、**FLOCKDN（Flash Lockdown）** ビットでロックされ、一度ロックされると、リセットまで変更できなくなります。これにより、攻撃者がソフトウェアから Flash Descriptor を改ざんし、アクセス権限を変更することを防ぎます。
 
-1. **SPI Flash の役割**：
-   - BIOS/UEFI の保存
-   - システムの Root of Trust
-   - 保護が不十分だとすべてのセキュリティが無効化
+SPI Flash の保護には、**複数の保護機構**が階層的に組み合わされています。まず、**BIOS Control レジスタ**では、3つの重要なビットを使用して BIOS 領域を保護します。**BIOSWE（BIOS Write Enable, Bit 0）** は、BIOS 書き込みを許可/禁止します。0 に設定すると、BIOS リージョンへの書き込みが禁止されます。**BLE（BIOS Lock Enable, Bit 1）** は、BIOSWE の変更を禁止します。1 に設定すると、BIOSWE の値が固定され、リセットまで変更できなくなります。**SMM_BWP（SMM BIOS Write Protect, Bit 5）** は、SMM 外からの BIOS 書き込みを禁止します。1 に設定すると、BIOSWE=1 であっても、SMM 以外（OS、UEFI DXE など）からの書き込みは禁止されます。これにより、SMM のみが BIOS を更新できるようになります。次に、**Protected Range Registers（PR0-PR4）** では、最大 5 つの保護範囲を 4KB 単位で設定できます。各 PR レジスタは、Base アドレス、Limit アドレス、Read Protection Enable、Write Protection Enable を持ち、特定の範囲を読み取り/書き込み保護できます。さらに、**WP# ピン（Hardware Write Protect）** では、SPI Flash チップの WP# ピンを Low にすることで、Flash の Status Register の一部ビットを変更不可にします。これにより、ソフトウェアから Block Protection の設定を解除できなくなります。最後に、**Block Protection（BP0-BP2 ビット）** では、Flash チップ内部の Status Register で保護範囲を設定します。これは、Flash チップレベルの保護であり、SPI コマンドでのみ変更できます。
 
-2. **Flash Descriptor**：
-   - Flash の制御データ
-   - Region とアクセス権限の定義
-   - FLOCKDN でロック
+**Platform Reset Attack** は、SPI Flash 保護の重要な脅威です。この攻撃では、攻撃者はシステムを物理的にリセットし、保護設定が行われる前のタイミングで Flash を書き換えます。具体的には、BIOS は起動時に BIOS Control レジスタや PR レジスタを設定しますが、この設定が完了する前にリセットボタンを押すと、保護が有効化されていない短い期間が発生します。この期間に攻撃者は Flash を書き換えることができます。**対策**としては、複数の手法が使用されます。まず、**Early Boot Guard** では、CPU のマイクロコードが起動直後に FLOCKDN を設定し、Flash Descriptor をロックします。これにより、アクセス権限の変更を早期に防ぎます。次に、**FLOCKDN の早期設定**では、BIOS の最初のステージ（SEC Phase）で FLOCKDN=1 を設定し、Flash Descriptor を即座にロックします。さらに、**Top Swap** では、Flash の2つの領域（Top Swap A/B）を用意し、一方が破損した場合に他方から起動します。これにより、攻撃者が Flash を書き換えても、バックアップ領域から起動できます。最後に、**物理的な保護**では、ケースロック、改ざん検知シール、セキュリティネジを使用して、物理アクセスを制限します。
 
-3. **保護機構**：
-   - **BIOS Control**: BIOSWE, BLE, SMM_BWP
-   - **Protected Range**: PR0-PR4 で範囲を保護
-   - **WP# ピン**: ハードウェア保護
-   - **Block Protection**: Flash チップ内部の保護
+**Intel BIOS Guard** は、SPI Flash の更新を**SMM のみに制限**する技術です。通常、OS やファームウェアアップデートツールは、SPI コントローラに直接アクセスして Flash を更新できます。しかし、これは攻撃者が OS レベルの権限を取得した場合、Flash を書き換えられることを意味します。BIOS Guard では、Flash の更新は**SMM（System Management Mode）** のみが行えるように制限されます。具体的には、BIOS Guard は、BIOS Control レジスタの SMM_BWP ビットを使用し、さらに BIOS Guard Script という特殊なスクリプトを使用して Flash 更新を行います。BIOS Guard Script は、Intel が署名した信頼されたコードであり、SMM 内で実行されます。OS からのファームウェア更新要求は、SMM にトラップされ、SMM が BIOS Guard Script を使用して Flash を更新します。これにより、OS が侵害されても、不正な Flash 更新を防ぐことができます。また、BIOS Guard は、**アトミックな更新**をサポートし、更新中に電源が切れた場合でも、Flash が破損しないようにします。
 
-4. **Platform Reset Attack**：
-   - 保護設定前にリセット
-   - **対策**: Early Boot Guard, FLOCKDN, Top Swap
-
-5. **Intel BIOS Guard**：
-   - SMM のみで Flash 更新
-   - OS からの直接書き換えを防止
-
-### 🔒 セキュリティのベストプラクティス
+### 補足表：セキュリティのベストプラクティス
 
 | 項目 | 推奨事項 |
 |------|---------|

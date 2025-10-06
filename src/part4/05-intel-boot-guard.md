@@ -22,18 +22,15 @@
 
 ## Intel Boot Guard とは
 
-### Boot Guard の目的
+**Intel Boot Guard** は、Intel プロセッサに組み込まれた**ハードウェアベースの BIOS 検証機構**であり、プラットフォームセキュリティの**最前線**を担います。Boot Guard の最大の特徴は、検証が**CPU のリセット直後**、つまり BIOS/UEFI ファームウェアが実行される前に行われる点です。これにより、BIOS 自体が攻撃者によって改ざんされていた場合でも、システムの起動を防ぐことができます。Boot Guard は、[Part IV Chapter 3](./03-secure-boot-architecture.md) で説明した UEFI Secure Boot よりも**さらに早い段階**で動作し、信頼チェーンの起点である **Root of Trust for Verification（RTV）** を CPU のハードウェアレベルで確立します。
 
-**Intel Boot Guard** は、Intel プロセッサに組み込まれた**ハードウェアベースの BIOS 検証機構**です：
+Boot Guard の主要な役割は、**4つのセキュリティ機能**に集約されます。まず、**BIOS の完全性保護**では、BIOS/UEFI ファームウェアのコードが OEM が署名した正規のものであることを検証し、改ざんを検出します。これにより、攻撃者が SPI Flash チップを物理的に書き換えて不正なコードを注入する**ブートキット攻撃**を防ぎます。次に、**早期検証**では、CPU のマイクロコードがリセット直後に ACM（Authenticated Code Module）を実行し、BIOS を検証します。この段階ではまだメモリも初期化されておらず、CPU のキャッシュのみを使用する CAR（Cache-as-RAM）モードで動作するため、DMA 攻撃やメモリ改ざんの影響を受けません。さらに、**鍵の保護**では、OTP Fuse（One-Time Programmable Fuse）に保存された公開鍵のハッシュを使用して署名を検証します。OTP Fuse は、一度書き込むと変更できないハードウェア領域であり、ソフトウェアから読み取りはできますが、書き換えはできません。最後に、**改ざん時の動作制御**では、検証に失敗した場合の動作を柔軟に設定できます。Verified Boot モードでは、検証失敗時にシステムを即座に停止し、不正なコードの実行を完全に阻止します。一方、Measured Boot モードでは、検証結果を TPM に記録し、起動は継続します。これにより、柔軟性を保ちながらも、後で Remote Attestation を通じて不正を検出できます。
 
-1. **BIOS の完全性保護**: BIOS/UEFI ファームウェアの改ざんを検出
-2. **早期検証**: リセット直後、CPU の ROM コードが BIOS を検証
-3. **鍵の保護**: OTP Fuse に保存された鍵で署名を検証
-4. **改ざん時の動作制御**: エラー時にシステムを停止または警告
+Boot Guard を理解する上で重要なのが、**他のセキュリティ機構との位置づけ**です。Boot Guard は、UEFI Secure Boot や TPM Measured Boot と**階層的に連携**し、多層防御（Defense in Depth）を実現します。Boot Guard は**最も早い段階**（CPU リセット直後、SEC Phase の開始前）で動作し、BIOS/UEFI ファームウェアの Initial Boot Block（IBB）を検証します。検証に成功すると、BIOS が起動し、UEFI Secure Boot が次の段階として**ブートローダやドライバ**を検証します。さらに、TPM Measured Boot は、すべてのブートコンポーネントのハッシュ値を測定し、PCR に記録します。この 3 段階の検証により、**ハードウェア → ファームウェア → ブートローダ → OS** という信頼チェーンが確立されます。もし Boot Guard がなければ、攻撃者は BIOS を改ざんし、Secure Boot の検証ロジック自体を無効化できてしまいます。Boot Guard により、この最初のステップが保護され、信頼チェーン全体の基盤が確保されます。
 
-> **Note**: Boot Guard は、Secure Boot よりも**さらに早い段階**（CPU のリセット直後）で検証を行います。これにより、BIOS 自体が改ざんされていても起動を防ぐことができます。
+Boot Guard の動作は、**3つのモード**から選択できます。**Verified Boot モード**では、デジタル署名の検証を行い、失敗時にシステムを停止します。このモードは、セキュリティが最重要のエンタープライズ PC やサーバで使用されます。**Measured Boot モード**では、BIOS のハッシュ値を TPM に記録しますが、検証失敗でも起動を継続します。これは、Remote Attestation で後から検証したい場合や、開発環境で柔軟性が必要な場合に使用されます。**Verified + Measured Boot モード**では、両方を同時に実行し、最高レベルのセキュリティを実現します。金融機関や政府機関など、極めて高いセキュリティが求められる環境では、このモードが推奨されます。
 
-### Boot Guard の位置づけ
+### 補足図：Boot Guard の位置づけ
 
 ```mermaid
 graph TD
@@ -52,7 +49,7 @@ graph TD
     style H fill:#feca57
 ```
 
-### 他の検証機構との比較
+### 補足表：他の検証機構との比較
 
 | 項目 | Intel Boot Guard | UEFI Secure Boot | TPM Measured Boot |
 |------|-----------------|------------------|-------------------|
@@ -821,40 +818,19 @@ grep -A 20 "PCR: 0" eventlog.txt
 
 ## まとめ
 
-この章では、Intel Boot Guard の仕組みを詳しく学びました：
+この章では、**Intel Boot Guard** の詳細な仕組みを学びました。Intel Boot Guard は、Intel プロセッサに組み込まれた**ハードウェアベースの BIOS 検証機構**であり、プラットフォームセキュリティの**最前線**を担います。Boot Guard の最大の特徴は、**CPU リセット直後**という極めて早い段階で BIOS/UEFI ファームウェアを検証することです。この早期検証により、BIOS 自体が改ざんされていても起動を防ぎ、ブートキット攻撃を根本から阻止します。Boot Guard は、**OTP Fuse（One-Time Programmable Fuse）** に保存された公開鍵のハッシュを使用して署名を検証するため、ソフトウェアレベルの攻撃では鍵を改ざんできません。OTP Fuse は一度書き込むと変更できないハードウェア領域であり、これがハードウェアベースの Root of Trust を実現する基盤となります。
 
-### ✅ 重要なポイント
+Boot Guard のアーキテクチャは、**4つの主要コンポーネント**で構成されています。まず、**ACM（Authenticated Code Module）** は、Intel が署名した信頼された実行モジュールであり、BIOS の検証ロジックを実行します。ACM は Intel の秘密鍵で署名されており、OEM は独自の ACM を作成できません。次に、**Key Manifest（KM）** は、OEM の公開鍵を格納し、BPM（Boot Policy Manifest）の検証に使用されます。KM は OEM が作成し、自身の秘密鍵で署名します。さらに、**Boot Policy Manifest（BPM）** は、BIOS の検証ポリシーを定義し、どの部分（IBB: Initial Boot Block）を検証するか、失敗時にどう動作するかを指定します。BPM も OEM が作成し、KM の秘密鍵で署名します。最後に、**OTP Fuse** は、OEM 公開鍵のハッシュと、最小 Security Version Number（SVN）を不変保存します。この階層的な署名検証（Intel が ACM を署名 → ACM が KM を検証 → KM が BPM を検証 → BPM が IBB を検証）により、信頼チェーンが確立されます。
 
-1. **Boot Guard の役割**：
-   - CPU リセット直後に BIOS を検証
-   - ハードウェアベースの Root of Trust
-   - OTP Fuse に保存された鍵で検証
+Boot Guard は、**3つの動作モード**をサポートしています。**Verified Boot モード**では、デジタル署名の検証を行い、失敗時にシステムを即座に停止します。このモードは、セキュリティが最重要のエンタープライズ PC やサーバで使用され、改ざんされた BIOS が起動することを完全に防ぎます。**Measured Boot モード**では、BIOS のハッシュ値を TPM PCR 0 に記録しますが、検証失敗でも起動は継続します。このモードは、Remote Attestation で後から検証したい場合や、開発環境で柔軟性が必要な場合に適しています。**Verified + Measured Boot モード**では、両方を同時に実行し、検証による即座の保護と、測定による事後検証の両方を実現します。金融機関や政府機関など、極めて高いセキュリティが求められる環境では、このモードが推奨されます。
 
-2. **主要コンポーネント**：
-   - **ACM**: Intel が署名した検証モジュール
-   - **KM**: OEM の公開鍵を格納
-   - **BPM**: BIOS 検証ポリシーを定義
-   - **OTP Fuse**: 鍵のハッシュを不変保存
+Boot Guard の**検証フロー**は、厳密に定義された順序で実行されます。まず、CPU のマイクロコードが SPI Flash から ACM をロードし、**Intel の公開鍵で ACM の署名を検証**します。ACM の検証に失敗すると、システムは即座に停止します（FATAL ERROR）。ACM の検証に成功すると、ACM が実行され、次に **Key Manifest（KM）をロード**します。ACM は、KM 内の公開鍵のハッシュを計算し、OTP Fuse に保存されたハッシュと比較します。ハッシュが一致すれば、KM の署名を検証します。次に、ACM は **Boot Policy Manifest（BPM）をロード**し、KM の公開鍵で BPM の署名を検証します。最後に、ACM は **Initial Boot Block（IBB）をロード**し、IBB のハッシュを計算して BPM 内のハッシュと比較します。すべての検証に成功すると、CPU は IBB（BIOS の最初のコード）の実行を開始します。この一連のフローにより、信頼チェーンが CPU のリセット時から確立されます。
 
-3. **動作モード**：
-   - **Verified Boot**: 検証失敗で起動停止
-   - **Measured Boot**: TPM に測定値を記録
-   - **Verified + Measured**: 両方を実行
+Boot Guard には、**複数のセキュリティ対策**が組み込まれています。まず、**SVN（Security Version Number）によるアンチロールバック**では、ACM、KM、BPM それぞれに SVN が付与され、OTP Fuse に最小 SVN が記録されます。古いバージョン（既知の脆弱性を含む）へのダウングレードを試みると、SVN チェックで拒否されます。次に、**DMA 保護（VT-d）** では、BPM 内に DMA Protection Range を定義し、VT-d（Virtualization Technology for Directed I/O）を使用して、検証中の IBB メモリへの DMA アクセスを禁止します。これにより、Thunderbolt などの DMA 攻撃から IBB を保護します。さらに、**キャッシュロック（CAR: Cache-as-RAM）** では、検証段階ではまだメモリが初期化されていないため、CPU のキャッシュを RAM として使用します。これにより、メモリへの物理的な攻撃（Cold Boot Attack など）の影響を受けません。検証後、IBB はキャッシュにロックされ、TOCTOU（Time-of-Check to Time-of-Use）攻撃を防ぎます。
 
-4. **検証フロー**：
-   - ACM 検証 → KM 検証 → BPM 検証 → IBB 検証
+Boot Guard を使用する際には、**重要な注意点**があります。最も重要なのは、**OTP Fuse は一度書き込むと変更できない**という点です。誤った公開鍵ハッシュを OTP Fuse に書き込むと、正しい BIOS でも起動できなくなり、マザーボード交換が必要になります。このため、OTP Fuse への書き込み前には、十分なテスト環境での検証が必須です。また、**誤設定によるシステム起動不能**のリスクもあります。BPM 内の IBB ハッシュが実際の BIOS と一致しない場合、Verified Boot モードではシステムが起動しません。このため、BIOS を更新する際は、必ず BPM も更新し、IBB ハッシュを再計算する必要があります。さらに、**Recovery 手段を事前に確保**することも重要です。多くのマザーボードには、Boot Guard をバイパスする Jumper が用意されており、緊急時にはこれを使用して起動できます。しかし、Jumper がない場合は、Recovery が極めて困難になるため、プロビジョニング前に Recovery 手段を確認しておく必要があります。
 
-5. **セキュリティ対策**：
-   - SVN によるアンチロールバック
-   - DMA 保護（VT-d）
-   - キャッシュロック（CAR）
-
-6. **注意点**：
-   - OTP Fuse は書き換え不可
-   - 誤設定でシステムが起動不能に
-   - Recovery 手段を事前に確保
-
-### 🔒 セキュリティのベストプラクティス
+### 補足表：セキュリティのベストプラクティス
 
 | 項目 | 推奨事項 |
 |------|---------|

@@ -22,19 +22,15 @@
 
 ## AMD PSP とは
 
-### PSP の目的
+**AMD Platform Security Processor（PSP）** は、AMD プロセッサに統合された**セキュリティ専用のプロセッサ**であり、プラットフォームセキュリティの中核を担います。PSP の最大の特徴は、**独立した ARM Cortex-A5 プロセッサ**として動作し、x86 メインプロセッサよりも**先に起動**する点です。PSP は、Intel の Management Engine（ME）と Intel Boot Guard を組み合わせたような存在であり、セキュアブート、鍵管理、メモリ暗号化、TPM 機能など、幅広いセキュリティサービスを提供します。PSP は、AMD Ryzen、EPYC、Threadripper といった AMD の主要プロセッサに搭載されており、サーバからコンシューマ PC まで、広範なプラットフォームで使用されています。
 
-**AMD Platform Security Processor（PSP）** は、AMD プロセッサに統合された**セキュリティ専用のプロセッサ**です：
+PSP の主要な役割は、**5つのセキュリティ機能**に集約されます。まず、**セキュアブート**では、BIOS/UEFI ファームウェアの完全性を検証し、改ざんされたコードの実行を防ぎます。PSP は、x86 CPU がリセット解除される前に BIOS の署名を検証し、検証に成功した場合のみ x86 CPU を起動します。これにより、[Part IV Chapter 5](./05-intel-boot-guard.md) で説明した Intel Boot Guard と同様の早期検証を実現します。次に、**鍵管理**では、暗号化鍵の生成、保存、管理を PSP 内部で行います。PSP は、OTP Fuse（One-Time Programmable Fuse）にチップ固有鍵（Chip Unique Key）を保存し、この鍵を使用してファームウェアや fTPM データを暗号化します。さらに、**メモリ暗号化**では、SEV（Secure Encrypted Virtualization）や SME（Secure Memory Encryption）を制御し、VM ごとのメモリ暗号化やシステムメモリ全体の透過的な暗号化を実現します。これにより、クラウド環境でのマルチテナント分離や、物理攻撃からのデータ保護が可能になります。また、**TPM 機能**では、fTPM（Firmware TPM）を実装し、物理的な dTPM（Discrete TPM）チップがないシステムでも TPM 2.0 機能を提供します。fTPM は PSP 内で動作し、PCR、鍵階層、Sealed Storage、Remote Attestation など、標準的な TPM 機能をすべてサポートします。最後に、**セキュアアップデート**では、PSP ファームウェア自体を安全に更新するための仕組みを提供し、署名検証とアンチロールバック（Anti-Rollback）により、不正なファームウェアへのダウングレードを防ぎます。
 
-1. **セキュアブート**: BIOS/UEFI の検証と起動制御
-2. **鍵管理**: 暗号化鍵の生成と保護
-3. **メモリ暗号化**: SEV（Secure Encrypted Virtualization）の制御
-4. **TPM 機能**: fTPM（Firmware TPM）の実装
-5. **セキュアアップデート**: PSP ファームウェアの安全な更新
+PSP を理解する上で重要なのが、**起動順序における位置づけ**です。PSP は、電源投入後、**x86 CPU よりも先に起動**します。具体的には、電源が投入されると、まず PSP の ROM コード（PSP Boot ROM）が実行され、PSP ブートローダを検証してロードします。次に、PSP ブートローダが PSP OS をロードして起動します。PSP OS が起動すると、セキュリティサービス（fTPM、SEV、SME）を初期化し、その後、SPI Flash から BIOS イメージをロードして署名を検証します。BIOS の検証に成功すると、PSP は x86 CPU のリセットを解除し、x86 CPU が BIOS/UEFI ファームウェアの実行を開始します。この起動順序により、**PSP → BIOS → UEFI Secure Boot → OS** という信頼チェーンが確立されます。PSP がなければ、攻撃者は BIOS を改ざんし、その後の Secure Boot 検証を無効化できてしまいます。PSP により、この最初のステップが保護され、プラットフォーム全体のセキュリティ基盤が確保されます。
 
-> **Note**: PSP は Intel の Management Engine（ME）と Intel Boot Guard を組み合わせたような存在です。独立したプロセッサとして動作し、x86 メインプロセッサよりも先に起動します。
+PSP は、**Intel の ME と Boot Guard** と比較されることが多いですが、いくつかの重要な違いがあります。まず、**プロセッサアーキテクチャ**において、PSP は ARM Cortex-A5（32ビット RISC）を使用するのに対し、Intel ME は x86 ベースの Quark または Atom プロセッサを使用します。ARM アーキテクチャの利点は、低消費電力で動作し、TrustZone（Secure/Non-Secure の分離）をサポートすることです。次に、**セキュアブート**において、PSP は BIOS の検証を PSP OS が行うのに対し、Intel では Boot Guard ACM（Authenticated Code Module）が検証を行います。さらに、**メモリ暗号化**において、AMD SEV は VM ごとに異なる鍵で暗号化できるのに対し、Intel TME（Total Memory Encryption）は初期バージョンではシステム全体で同じ鍵を使用します。AMD SEV-SNP（Secure Nested Paging）では、さらに VM の完全性保護とアタック面の縮小が実現されています。また、**オープンソース対応**において、AMD は PSP の一部仕様やツールを公開しており、コミュニティによるリバースエンジニアリング（PSPReverse プロジェクト）も活発です。一方、Intel ME は完全にクローズドソースであり、仕様の公開が限定的です。最後に、**リモート管理**において、Intel ME は AMT（Active Management Technology）による強力なリモート管理機能を提供しますが、PSP のリモート管理機能は限定的です。
 
-### PSP の位置づけ
+### 補足図：PSP の位置づけ
 
 ```mermaid
 graph TD
@@ -55,7 +51,7 @@ graph TD
     style J fill:#feca57
 ```
 
-### Intel ME/Boot Guard との比較
+### 補足表：Intel ME/Boot Guard との比較
 
 | 項目 | AMD PSP | Intel ME + Boot Guard |
 |------|---------|----------------------|
@@ -893,38 +889,17 @@ sudo dmesg | grep -i sev
 
 ## まとめ
 
-この章では、AMD PSP（Platform Security Processor）の仕組みを詳しく学びました：
+この章では、**AMD PSP（Platform Security Processor）** の詳細な仕組みを学びました。AMD PSP は、AMD プロセッサに統合された**セキュリティ専用のプロセッサ**であり、**独立した ARM Cortex-A5 プロセッサ**として動作します。PSP の最大の特徴は、**x86 CPU よりも先に起動**し、BIOS/UEFI ファームウェアのセキュアブートを実行する点です。この早期起動により、PSP は**信頼チェーンの起点**（Root of Trust）となり、BIOS の改ざんを検出して不正なコードの実行を防ぎます。PSP は、Intel の Management Engine（ME）と Intel Boot Guard を組み合わせたような存在であり、セキュアブート、鍵管理、メモリ暗号化、fTPM、セキュアアップデートといった幅広いセキュリティ機能を統合的に提供します。
 
-### ✅ 重要なポイント
+PSP のアーキテクチャは、**4つの主要コンポーネント**で構成されています。まず、**ARM Cortex-A5 コア**は、32ビット RISC プロセッサであり、約 100-200 MHz の低周波数で動作します。ARM TrustZone をサポートし、Secure World と Normal World を分離してセキュリティを強化します。次に、**PSP ROM（Boot ROM）** は、PSP の**最初の Root of Trust** であり、製造時に焼き込まれた読み取り専用のコードです。PSP ROM は、PSP ブートローダを AMD の公開鍵で検証し、検証に成功した場合のみ実行します。さらに、**OTP Fuse（One-Time Programmable Fuse）** は、プラットフォームベンダー ID、OEM 公開鍵ハッシュ、セキュアブートポリシー、ファームウェア暗号化鍵、アンチロールバックカウンタ、チップ固有鍵（Chip Unique Key）などの重要な設定と鍵を不変保存します。OTP Fuse は一度書き込むと変更できないため、ソフトウェア攻撃では改ざんできません。最後に、**Crypto Engine** は、AES-128/256、SHA-1/SHA-256/SHA-384/SHA-512、RSA-2048/3072/4096、ECC P-256/P-384、TRNG（True Random Number Generator）といった暗号化アルゴリズムをハードウェアで高速に実行します。
 
-1. **PSP の役割**：
-   - 独立した ARM プロセッサとして動作
-   - x86 CPU よりも先に起動
-   - BIOS のセキュアブートを実行
+PSP が提供する**主要なセキュリティ機能**は、プラットフォーム全体のセキュリティを大幅に向上させます。まず、**Secure Boot（PSP セキュアブート）** では、PSP が SPI Flash から BIOS イメージをロードし、OEM の公開鍵で署名を検証します。検証に成功した場合のみ x86 CPU のリセットを解除し、BIOS を起動します。これにより、ブートキットや BIOS ルートキットの実行を根本から防ぎます。次に、**SEV（Secure Encrypted Virtualization）** では、仮想マシンごとに異なる暗号化鍵を使用してメモリを暗号化し、ハイパーバイザーからも VM のメモリ内容を保護します。SEV は、クラウド環境でのマルチテナント分離に極めて有効であり、ハイパーバイザーが侵害されても VM のデータは保護されます。SEV-ES（Encrypted State）では、さらにレジスタ状態も暗号化し、SEV-SNP（Secure Nested Paging）では、VM の完全性保護とサイドチャネル攻撃への耐性が強化されています。さらに、**SME（Secure Memory Encryption）** では、システムメモリ全体を透過的に暗号化し、物理的な攻撃（Cold Boot Attack、メモリダンプ）からデータを保護します。SME は OS から意識されず、既存のソフトウェアをそのまま使用できます。また、**fTPM（Firmware TPM）** では、PSP 内で TPM 2.0 を実装し、物理的な dTPM チップがないシステムでも PCR、Sealed Storage、Remote Attestation などの TPM 機能を提供します。fTPM のデータは PSP の SRAM と DRAM に保存され、Chip Unique Key で暗号化されます。
 
-2. **主要コンポーネント**：
-   - **ARM Cortex-A5**: PSP のプロセッサコア
-   - **PSP ROM**: Root of Trust
-   - **OTP Fuse**: 鍵とポリシーの不変保存
-   - **Crypto Engine**: AES/RSA/SHA 暗号化
+PSP は、**Intel の ME と Boot Guard** と比較すると、いくつかの重要な違いがあります。まず、**プロセッサアーキテクチャ**において、PSP は ARM Cortex-A5 を使用し、低消費電力で動作します。ARM TrustZone により、Secure World と Normal World を分離し、セキュリティを強化します。一方、Intel ME は x86 ベースの Quark または Atom プロセッサを使用します。次に、**メモリ暗号化**において、AMD SEV は VM ごとに異なる鍵で暗号化できるのに対し、Intel TME（Total Memory Encryption）は初期バージョンではシステム全体で同じ鍵を使用します。SEV-SNP では、さらに VM の完全性保護が追加され、ハイパーバイザーによる不正な VM メモリの変更を検出できます。さらに、**オープンソース対応**において、AMD は PSP の一部仕様やツール（PSPTool、AMD SEV ドキュメント）を公開しており、コミュニティによる解析活動（PSPReverse プロジェクト）も活発です。一方、Intel ME は完全にクローズドソースであり、仕様の公開が限定的です。最後に、**リモート管理**において、Intel ME は AMT（Active Management Technology）による帯域外管理（Out-of-Band Management）を提供しますが、PSP のリモート管理機能は限定的です。
 
-3. **セキュリティ機能**：
-   - **Secure Boot**: BIOS の署名検証
-   - **SEV**: VM メモリの暗号化
-   - **SME**: システムメモリ全体の暗号化
-   - **fTPM**: ファームウェア TPM 2.0
+PSP に関しては、**セキュリティ考察**も重要です。PSP ファームウェアは、過去にいくつかの脆弱性が報告されており、2018年には CTS Labs が複数の脆弱性（MASTERKEY、RYZENFALL、FALLOUT、CHIMERA）を公表しました。これらの脆弱性の多くは、ローカル管理者権限や物理アクセスが必要であり、実際の攻撃リスクは限定的でしたが、PSP ファームウェアの攻撃面を示しました。AMD は、定期的に BIOS/PSP ファームウェアの更新を提供し、既知の脆弱性を修正しています。また、PSP のコードの大部分は**クローズドソース**であり、外部からの監査が困難です。これに対し、コミュニティは PSPReverse プロジェクトなどでリバースエンジニアリングを行い、PSP の動作を解析しています。PSP の透明性を高めるために、AMD にはより多くの仕様の公開が期待されています。さらに、PSP には**ハードウェア的な無効化手段がない**ため、完全に無効化することは困難です。一部のマザーボードでは BIOS 設定で PSP の一部機能を無効化できますが、セキュアブートや fTPM を無効化するとセキュリティが低下します。
 
-4. **Intel との違い**：
-   - PSP は ARM、ME は x86
-   - PSP は一部オープンソース
-   - SEV は Intel TME より高機能
-
-5. **セキュリティ考察**：
-   - PSP ファームウェアの脆弱性
-   - クローズドソースの懸念
-   - コミュニティによる解析活動
-
-### 🔒 セキュリティのベストプラクティス
+### 補足表：セキュリティのベストプラクティス
 
 | 項目 | 推奨事項 |
 |------|---------|
