@@ -597,9 +597,7 @@ InitializeFch (
 }
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: AMD AGESA: Intel FSP に対抗するプラットフォーム初期化フレームワーク
 
@@ -638,8 +636,6 @@ AMD Ryzen および EPYC 世代では、**AGESA v5（Combo PI）** が導入さ�
 - "AMD AGESA and coreboot" - Open Source Firmware Conference talks
 
 </div>
-
----
 
 ## 演習問題
 

@@ -123,9 +123,7 @@ AsmWriteMsr64 (0x79, (UINT64)(UINTN)MicrocodeData);
 UINT64 MicrocodeVersion = AsmReadMsr64 (0x8B);
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: マイクロコードと CPU 初期化の仕組み
 
@@ -152,8 +150,6 @@ CPU 初期化を理解するには、いくつかの重要な予備知識が必�
 - Jon Stokes, "Inside the Machine" - CISC と RISC、マイクロアーキテクチャの解説
 
 </div>
-
----
 
 ## キャッシュの初期化
 

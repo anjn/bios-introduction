@@ -509,9 +509,7 @@ CheckAntiRollback (
 }
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: BootHole 脆弱性 (CVE-2020-10713) - Secure Boot をバイパスする深刻な欠陥
 
@@ -542,8 +540,6 @@ BootHole は、**Secure Boot の限界**も示しています。Secure Boot は�
 - [GRUB2 Security Advisory](https://www.gnu.org/software/grub/) - GRUB2 公式サイト
 
 </div>
-
----
 
 ## 演習問題
 

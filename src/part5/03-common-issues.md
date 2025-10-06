@@ -477,9 +477,7 @@ ReportMemoryLeaks (
 #endif
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: 3日かかったヒープ破壊バグ - デバッグの現実
 
@@ -503,8 +501,6 @@ ReportMemoryLeaks (
 - [Valgrind User Manual](https://valgrind.org/docs/manual/manual.html) (Linux アプリケーション用だが概念は同じ)
 
 </div>
-
----
 
 ## 初期化順序の問題
 

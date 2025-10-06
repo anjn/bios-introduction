@@ -551,9 +551,7 @@ sbsign --key MOK.priv --cert MOK.der --output vmlinuz-signed vmlinuz
 | **Microsoft の信頼** | Shim 自体は Microsoft が署名 |
 | **セキュリティ** | db を汚染せずに鍵を追加 |
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: Secure Boot が複雑な理由 - 標準化の舞台裏
 
@@ -578,8 +576,6 @@ UEFI Secure Boot の仕様は、なぜ PK/KEK/db/dbx という4層構造や Shim
 - [Matthew Garrett's Blog: Secure Boot](https://mjg59.dreamwidth.org/)
 
 </div>
-
----
 
 ## Secure Boot の設定と管理
 

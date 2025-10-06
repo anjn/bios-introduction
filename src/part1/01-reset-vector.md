@@ -74,9 +74,7 @@ graph TB
     style C fill:#f99,stroke:#333,stroke-width:2px
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: なぜリセットベクタは 0xFFFFFFF0 なのか - 40年続く設計判断
 
@@ -107,8 +105,6 @@ x86 の「0xFFFFFFF0 固定」という設計は、柔軟性に欠けると批�
 - ARM Architecture Reference Manual - Exception Handling
 
 </div>
-
----
 
 ### リセットベクタ (Reset Vector)
 

@@ -90,9 +90,7 @@ Offset  Size  Description
 BIOS → MBR読み込み (0x7C00) → MBRコード実行 → OSローダ
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: MBR の 512 バイト制限 - 40年続く設計上の制約と創意工夫
 
@@ -116,8 +114,6 @@ GRUB（GRand Unified Bootloader）の MBR コードは、まさにこの制約�
 - [IBM PC Technical Reference Manual (1981)](https://archive.org/details/IBM_5150_Technical_Reference_6025005_APR84)
 
 </div>
-
----
 
 ## CSM (Compatibility Support Module)
 

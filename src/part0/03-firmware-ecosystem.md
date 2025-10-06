@@ -207,9 +207,7 @@ graph LR
 - セキュリティ重視
 - Measured Boot
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: 3大BIOSベンダー - AMI vs Insyde vs Phoenix
 
@@ -251,8 +249,6 @@ PC を起動して表示される BIOS 設定画面には、「American Megatren
 - "The BIOS Companion" (Phil Croucher) - BIOS ベンダーの歴史と技術
 
 </div>
-
----
 
 ## 開発ツールとエミュレータ
 

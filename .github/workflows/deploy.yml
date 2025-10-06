@@ -31,9 +31,9 @@ jobs:
           cargo install mdbook-mermaid
           mdbook-mermaid install .
 
-      - name: Install mdbook-pdf
-        run: |
-          cargo install mdbook-pdf
+#      - name: Install mdbook-pdf
+#        run: |
+#          cargo install mdbook-pdf
 
       - name: Build book
         run: mdbook build

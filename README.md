@@ -5,7 +5,10 @@ BIOSの基礎から実践まで学べる入門書です。
 ## 📖 オンライン版
 
 このドキュメントはGitHub Pagesで公開されています：
-- https://anjn.github.io/bios-introduction/
+- **日本語版**: https://anjn.github.io/bios-introduction/
+- **English**: https://anjn.github.io/bios-introduction/en/
+
+右上の言語セレクタで切り替えできます。
 
 ## 🚀 ローカルで閲覧
 
@@ -74,11 +77,42 @@ mdbook build
 ### 付録
 - 用語集、クイックリファレンス、参考文献
 
+## 🌍 Translation / 翻訳
+
+English translation is available! 英語版も公開中です！
+
+For translation workflow and guidelines, see [TRANSLATION.md](TRANSLATION.md).
+
+翻訳のワークフローとガイドラインは [TRANSLATION.md](TRANSLATION.md) を参照してください。
+
+### Quick Start for Translators
+
+```bash
+# Install tools
+cargo install mdbook mdbook-i18n-helpers
+brew install gettext  # or apt install gettext
+
+# Extract translatable strings
+./scripts/extract-pot.sh
+
+# Initialize English translation (first time only)
+msginit -i po/messages.pot -l en -o po/en.po
+
+# Edit po/en.po with your favorite PO editor (e.g., Poedit)
+
+# Build both versions
+./scripts/build-all-languages.sh
+```
+
 ## 📝 執筆に参加
 
 1. このリポジトリをフォーク
 2. `src/` 内のMarkdownファイルを編集
 3. プルリクエストを作成
+
+### 翻訳への貢献
+
+英語翻訳への協力も歓迎します！詳細は [TRANSLATION.md](TRANSLATION.md) をご覧ください。
 
 ## 📄 ライセンス
 

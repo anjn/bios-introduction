@@ -69,9 +69,7 @@ graph LR
     style A fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: TianoCore プロジェクトの誕生 - Intel によるオープンソース化の決断
 
@@ -104,8 +102,6 @@ TianoCore コミュニティは、年次イベント「UEFI Plugfest」を開催
 - ["Intel's Open Source Firmware Evolution"](https://firmware.intel.com/) - Intel の公式ブログ
 
 </div>
-
----
 
 ## EDK II の設計思想
 

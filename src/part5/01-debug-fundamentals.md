@@ -422,9 +422,7 @@ DebugPrint (
 | **Serial** | 0x3F8 (COM1) | 標準出力、対話も可能 | `-serial stdio` |
 | **POST コード** | 0x80 | ブート進行状況 | デフォルトで QEMU 内部ログ |
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: GDB で UEFI をデバッグする - 実践的な落とし穴と回避策
 
@@ -446,8 +444,6 @@ PEI フェーズのデバッグはさらに困難です。PEI は DRAM 初期化
 - [QEMU GDB Documentation](https://qemu.readthedocs.io/en/latest/system/gdb.html)
 
 </div>
-
----
 
 ## POST コードによるデバッグ
 

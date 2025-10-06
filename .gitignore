@@ -15,3 +15,8 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# Translation files (auto-generated)
+po/messages.pot
+po/*.mo
+translations/

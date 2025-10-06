@@ -71,9 +71,7 @@ timeline
     2012 : Secure Boot<br/>署名検証
 ```
 
----
-
-<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #4a90e2; border-radius: 8px; padding: 10px 20px 20px 20px; margin: 20px 0;">
 
 ## 💡 コラム: IBM PC BIOSの誕生秘話と互換機革命
 
@@ -99,8 +97,6 @@ BIOS の互換性は、40年以上経った現代でも維持されています�
 - ["How Compaq Cloned the IBM PC"](https://www.pcworld.com/article/2025446/how-compaq-clone-ibm-pc.html) - PC World 記事
 
 </div>
-
----
 
 ### 設計上の制約
 
