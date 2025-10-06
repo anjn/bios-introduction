@@ -599,6 +599,44 @@ InitializeFch (
 
 ---
 
+## 💡 コラム: AMD AGESA: Intel FSP に対抗するプラットフォーム初期化フレームワーク
+
+🏢 **ベンダー固有の話**
+
+AMD AGESA（AMD Generic Encapsulated Software Architecture）は、Intel FSP と同様に、プラットフォーム初期化の複雑さを BIOS ベンダーから隠蔽するためのフレームワークです。本章で学んだ Intel FSP が PCH の初期化を担当するように、AGESA は AMD プラットフォームの FCH（Fusion Controller Hub）、メモリ、CPU、そして Infinity Fabric の初期化を担当します。AGESA の最大の目的は、チップセット設計の詳細を抽象化し、BIOS ベンダー（AMI、Phoenix、Insyde など）が容易にプラットフォームをサポートできるようにすることです。これにより、AMD は新しいプロセッサやチップセットを市場に投入する際、BIOS ベンダーが迅速に対応でき、エコシステム全体の開発効率が向上します。
+
+AGESA の歴史は、2000年代半ばの AMD K8（Athlon 64）時代にさかのぼります。当時、AMD はデスクトップ、サーバ（Opteron）、モバイルといった多様なプラットフォームに対応する必要がありました。各プラットフォームは異なるメモリ構成、異なる HyperTransport 接続、異なるチップセットを持っており、BIOS ベンダーがこれらすべてをゼロから実装するのは非常に困難でした。そこで、AMD は AGESA という共通の初期化フレームワークを開発し、プラットフォーム固有の複雑な初期化処理を AGESA に集約しました。BIOS ベンダーは、AGESA を呼び出すだけで、メモリトレーニングや CPU の起動といった複雑な処理を実行できるようになりました。この設計により、AMD プラットフォームの BIOS 開発期間が大幅に短縮され、新しいプロセッサの市場投入が加速しました。
+
+AGESA は、複数のコンポーネントで構成されています。まず、**Memory Initialization** は、DRAM のトレーニング（最適なタイミング設定の探索）と初期化を担当します。DDR メモリは、電圧、周波数、タイミングパラメータが複雑に絡み合っており、各メモリモジュールに対して最適な設定を見つける必要があります。AGESA は、SPD EEPROM からメモリの仕様を読み取り、数百から数千のパラメータ組み合わせをテストして、最適な設定を決定します。次に、**CPU Initialization** は、マルチコアの起動、マイクロコードの更新、P-state/C-state の設定を行います。AMD の CPU は、最大 64 コア（EPYC）を持つため、各コアを適切に起動し、電源管理を設定する必要があります。さらに、**FCH Initialization** は、Fusion Controller Hub（AMD 版の PCH）を初期化し、SATA、USB、LPC、GPIO などのサブシステムを設定します。最後に、**HyperTransport/Infinity Fabric** の設定は、CPU 間（マルチソケットサーバ）や CPU-FCH 間の高速接続を初期化します。Infinity Fabric は、Zen アーキテクチャで導入された新しい接続技術であり、CPU コア、キャッシュ、メモリコントローラ、I/O コントローラをすべて接続します。
+
+UEFI の普及に伴い、AMD は **AGESA PI（Platform Initialization）** という新しいバージョンを開発しました。AGESA PI は、UEFI PI（Platform Initialization）仕様に準拠し、PEI Module（PEIM）として EDK II に統合できるように設計されています。従来の AGESA は独自の API とデータ構造を持っていましたが、AGESA PI は UEFI 標準の PPI（PEIM-to-PEIM Interface）と HOB（Hand-Off Block）を使用します。これにより、EDK II ベースの BIOS に AGESA を統合することが容易になり、UEFI エコシステムとの親和性が向上しました。AGESA PI は、内部的には従来の AGESA のコアロジックを使用しつつ、外部インターフェースを UEFI PI に準拠させるラッパー層を提供しています。
+
+AGESA のもう一つの興味深い側面は、**オープンソースとプロプライエタリのバランス**です。Intel FSP は完全にバイナリのみで提供され、ソースコードは公開されていません。一方、AMD は coreboot コミュニティとの協力により、AGESA の一部をオープンソース化しています。coreboot で AMD プラットフォームをサポートする場合、AGESA はバイナリブロブとして統合されますが、そのインターフェースと統合方法は公開されています。AMD は、PSP（Platform Security Processor）ファームウェアやチップセット初期化の一部を非公開としていますが、メモリ初期化やCPU 初期化の一部は公開することで、コミュニティの貢献を受け入れています。この選択的オープンソース化により、AMD はセキュリティと知的財産を保護しつつ、オープンソースコミュニティとの協力関係を維持しています。
+
+AMD Ryzen および EPYC 世代では、**AGESA v5（Combo PI）** が導入されました。Combo PI は、複数世代の Zen アーキテクチャ（Zen、Zen+、Zen 2、Zen 3）を単一の AGESA で対応できるように設計されています。これにより、マザーボードベンダーは、BIOS 更新により新しい Ryzen プロセッサをサポートできるようになりました。実際、Ryzen プラットフォームでは、AGESA の更新が頻繁に行われ、メモリ互換性の向上（新しい DDR4 モジュールのサポート）、CPU 互換性の向上（新しい Ryzen 5000 シリーズのサポート）、パフォーマンスの向上（メモリタイミングの最適化、ブースト動作の改善）が提供されます。ユーザーがマザーボードベンダーのウェブサイトから BIOS 更新をダウンロードする際、その更新内容に「AGESA 1.2.0.3 に更新」といった記載を見ることがありますが、これはまさに AGESA の新しいバージョンが含まれていることを意味します。
+
+本章で学んだ FCH の初期化（SATA、USB、LPC、GPIO など）は、AGESA が提供する機能のごく一部です。AGESA は、これらの I/O サブシステムだけでなく、メモリトレーニング、CPU マルチコア起動、Infinity Fabric 設定、電源管理など、プラットフォーム全体の初期化を担当します。プラットフォーム開発者にとって、Intel プラットフォームでは FSP の理解が必須であり、AMD プラットフォームでは AGESA の理解が必須です。両者は異なるアーキテクチャと設計思想を持ちますが、「複雑なプラットフォーム初期化を抽象化し、BIOS ベンダーの負担を軽減する」という共通の目的を持っています。FSP と AGESA の存在により、現代の複雑な x86 プラットフォームが、多数の BIOS ベンダーによってサポートされ、エコシステム全体が健全に機能しているのです。
+
+**参考表: Intel FSP vs AMD AGESA**
+
+| 項目 | Intel FSP | AMD AGESA |
+|------|-----------|-----------|
+| **提供形態** | バイナリのみ | 選択的オープンソース |
+| **対応アーキテクチャ** | x86_64 (Intel) | x86_64 (AMD) |
+| **主な初期化** | PCH、メモリ、CPU | FCH、メモリ、CPU、Infinity Fabric |
+| **UEFI PI 準拠** | あり (FSP 2.x) | あり (AGESA PI) |
+| **coreboot 対応** | あり (バイナリ) | あり (バイナリ) |
+| **更新頻度** | BIOS 更新 | BIOS 更新（頻繁） |
+| **オープンソース度** | なし | 一部公開 |
+
+**参考資料**:
+- [coreboot AGESA Integration](https://doc.coreboot.org/vendorcode/amd/agesa/index.html)
+- [UEFI PI (Platform Initialization) Specification](https://uefi.org/specifications)
+- AMD Ryzen AGESA Release Notes（マザーボードベンダーのBIOS更新ページ）
+- "AMD AGESA and coreboot" - Open Source Firmware Conference talks
+
+---
+
 ## 演習問題
 
 ### 基本演習

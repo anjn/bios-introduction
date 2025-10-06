@@ -125,6 +125,32 @@ UINT64 MicrocodeVersion = AsmReadMsr64 (0x8B);
 
 ---
 
+## 💡 コラム: マイクロコードと CPU 初期化の仕組み
+
+🔬 **技術的深堀り**
+
+なぜ x86 CPU はマイクロコードという仕組みを持つのでしょうか。その答えは、x86 が CISC（Complex Instruction Set Computing）アーキテクチャとして設計されたことに由来します。CISC は、1つの命令で複雑な操作を実行できるように設計されており、例えば `REP MOVSB` という命令は、文字列全体をメモリ間でコピーする複雑な処理を単一命令で実現します。しかし、このような複雑な命令をハードウェアで直接実装すると、回路が非常に複雑になり、高速化が困難になります。そこで、Intel は、複雑な CISC 命令を内部的に単純な RISC 風のマイクロオペレーション（μops、マイクロオプス）に変換し、パイプラインで並列実行する方式を採用しました。この変換を行うのがマイクロコードです。
+
+マイクロコードは、CPU 内部のマイクロプログラムであり、各 x86 命令をどのような μops に分解するかを定義します。例えば、`PUSH EAX` という命令は、内部的には「ESP を 4 減らす」「EAX の値をメモリに書き込む」という 2 つの μops に分解されます。より複雑な命令（例: `ENTER` や文字列操作命令）は、数十の μops に分解されることもあります。このマイクロコード変換により、x86 CPU は外部的には CISC の互換性を保ちながら、内部的には RISC 風の高速パイプラインで実行できるのです。Pentium Pro（1995年）以降の Intel CPU は、すべてこの「CISC-to-RISC 変換」方式を採用しています。
+
+マイクロコードは、CPU 内部の ROM（不揮発性メモリ）に焼き込まれていますが、製造後に発見されたバグや新機能の追加に対応するため、更新可能な領域も持っています。更新可能なマイクロコードは、CPU 内部の SRAM（揮発性メモリ）に格納されます。重要なのは、SRAM は電源を切ると内容が消えるため、起動時に毎回ファームウェア（BIOS/UEFI）がマイクロコードを CPU にロードする必要があるということです。本章で学んだマイクロコード更新（MSR 0x79 への書き込み）は、まさにこの SRAM へのロードプロセスです。CPU は、まず ROM 内のマイクロコードで起動し、その後 BIOS が提供する最新のマイクロコードで SRAM を上書きします。
+
+CPU 初期化を理解するには、いくつかの重要な予備知識が必要です。まず、**MSR（Model Specific Register）** は、CPU の設定や状態を格納する特殊なレジスタです。MSR は、通常のレジスタ（EAX、EBX など）とは異なり、`RDMSR` 命令と `WRMSR` 命令でのみアクセスできます。本章で使用した MSR 0x79（マイクロコード更新）、MSR 0x8B（マイクロコードバージョン）、MSR 0x17（Platform ID）は、CPU 初期化で頻繁に使用される MSR の一部です。次に、**CPUID 命令**は、CPU の機能、ファミリ、モデル、ステッピングなどの情報を取得する命令です。ファームウェアは、CPUID で CPU を識別し、適切なマイクロコードや設定を選択します。さらに、**BSP（Bootstrap Processor）** と **AP（Application Processor）** の区別も重要です。マルチコア CPU では、リセット後に 1 つのコア（BSP）のみが実行を開始し、残りのコア（AP）は初期化待機状態（Wait-for-SIPI）にあります。BSP がファームウェアを実行し、適切なタイミングで AP を起動します。
+
+もう一つの重要な概念が **Cache as RAM（CAR）** です。ブートプロセスの初期段階（SEC Phase）では、まだ DRAM が初期化されていないため、通常のメモリが使用できません。しかし、CPU はスタックやヒープなどの一時データを保存する領域が必要です。そこで、CPU のキャッシュ（L1 データキャッシュ）を一時的にメモリとして使用します。これが CAR（または NEM: No-Evict Mode）です。CPU は、特定のメモリアドレス範囲をキャッシュに固定し、外部メモリへの書き戻しを無効化することで、キャッシュを RAM のように使用できます。通常、32 KB から 128 KB 程度の CAR が利用可能です。**MTRR（Memory Type Range Register）** も重要です。MTRR は、メモリアドレス範囲ごとに異なるキャッシュポリシーを設定するレジスタです。例えば、Flash ROM は WP（Write Protected、読み取りのみキャッシュ）、DRAM は WB（Write Back、読み書きキャッシュ）、MMIO 領域は UC（Uncacheable、キャッシュ不可）といった設定を行います。これらの設定により、CPU は各メモリ領域に適した方法でキャッシュを使用できます。
+
+マイクロコードは、セキュリティの観点でも非常に重要です。2018年に発見された **Spectre** と **Meltdown** という CPU 脆弱性は、投機実行（Speculative Execution）の仕組みを悪用し、他のプロセスのメモリ内容を読み取る攻撃手法です。これらの脆弱性は、CPU のハードウェア設計に起因するため、完全な修正にはハードウェアの変更が必要ですが、部分的な緩和策としてマイクロコード更新が提供されました。Intel は、投機実行の動作を変更するマイクロコードを配布し、脆弱性のリスクを軽減しました。マイクロコード更新は、BIOS/UEFI 更新を通じて配布される場合と、OS（Linux、Windows）がブート時に適用する場合があります。BIOS 更新による方法は、すべての OS で有効ですが、BIOS 更新が必要です。OS レベルの更新は、より柔軟ですが、OS が起動するまで保護が適用されません。
+
+本章で学ぶマイクロコード更新、キャッシュ設定（MTRR）、BSP/AP 起動、MSR 設定といった CPU 初期化のステップは、すべてこれらの基礎知識の上に成り立っています。マイクロコードが CISC 命令を μops に変換する仕組みを理解することで、なぜマイクロコード更新が重要なのかが明確になります。MSR、CPUID、MTRR、CAR といった概念を理解することで、CPU 初期化コードの各ステップの意味が理解できるようになります。そして、Spectre/Meltdown のようなセキュリティ脆弱性を知ることで、ファームウェアが最新のマイクロコードを適用する責任の重さを実感できるでしょう。CPU 初期化は、単なる設定作業ではなく、システム全体のパフォーマンスとセキュリティを左右する重要なプロセスなのです。
+
+**参考資料**:
+- [Intel® 64 and IA-32 Architectures Software Developer's Manual, Volume 3](https://www.intel.com/sdm) - Chapter 9: Processor Management and Initialization
+- [Intel Microcode Update Guidance](https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/resources/microcode-update-guidance.html)
+- ["Meltdown and Spectre" (meltdownattack.com)](https://meltdownattack.com/) - CPU 脆弱性の詳細
+- Jon Stokes, "Inside the Machine" - CISC と RISC、マイクロアーキテクチャの解説
+
+---
+
 ## キャッシュの初期化
 
 ### キャッシュの階層
